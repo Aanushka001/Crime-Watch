@@ -1,0 +1,61 @@
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependency directories
+jspm_packages/
+
+# Environment variables
+.env
+
+# Build directories
+dist/
+build/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# TypeScript v1 declaration files
+typings/
+
+# Optional npm cache directory
+.npm
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Next.js build output
+.next/
+out/
+
+# Expo files
+.expo/
+.expo-shared/
+
+# Log files
+*.log
+
+# SvelteKit build output
+.svelte-kit/
+
+# React Native
+ios/
+android/
+
+# Webpack files
+webpack.config.js
+webpack.config.*.js

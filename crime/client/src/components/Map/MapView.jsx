@@ -158,10 +158,6 @@ const MapView = () => {
         </section>
       </main>
 
-      <footer className="map-footer">
-        <p>© 2024 Crime Watch. All rights reserved.</p>
-        <p>Providing real-time crime reporting and safety information.</p>
-      </footer>
     </div>
   );
 };

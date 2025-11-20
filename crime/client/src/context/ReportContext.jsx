@@ -17,9 +17,8 @@ export const ReportProvider = ({ children }) => {
       const data = await getUserReports();
       setReports(data);
     } catch (err) {
-  return;
-}
-finally {
+      return;
+    } finally {
       setLoading(false);
     }
   };

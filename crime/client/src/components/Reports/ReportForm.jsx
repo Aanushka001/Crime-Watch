@@ -1,115 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
 import { AuthContext } from '../../context/AuthContext';
 import { ReportContext } from '../../context/ReportContext';
 import { submitReport, updateReport, deleteReport } from '../../utils/api';
-
-const Container = styled.div`
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #939185;
-  color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-`;
-
-const Title = styled.h2`
-  font-size: 28px;
-  margin-bottom: 20px;
-`;
-
-const Form = styled.form`
-  margin-bottom: 20px;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 15px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #777777;
-  color: #fff;
-`;
-
-const TextArea = styled.textarea`
-  width: 98%;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  resize: vertical;
-  min-height: 80px;
-  background-color: #777777;
-  color: #fff;
-`;
-
-const Input = styled.input`
-  width: 98%;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #777777;
-  color: #fff;
-`;
-
-const Button = styled.button`
-  padding: 10px 20px;
-  background-color: #f9a825;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-`;
-
-const PreviousReports = styled.div`
-  margin-top: 30px;
-`;
-
-const ReportItem = styled.div`
-  margin-bottom: 15px;
-  padding: 10px;
-  background-color: #555;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-`;
-
-const Details = styled.div`
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #666;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-`;
-
-const ErrorMessage = styled.p`
-  color: red;
-  font-weight: bold;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-`;
 
 const ReportCrime = () => {
   const { user } = useContext(AuthContext);
@@ -124,25 +17,166 @@ const ReportCrime = () => {
   const [editId, setEditId] = useState(null);
   const [viewRecordId, setViewRecordId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
   const navigate = useNavigate();
 
+  const colors = {
+    primary: '#2563eb',
+    primaryDark: '#1d4ed8',
+    secondary: '#3b82f6',
+    background: '#0f172a',
+    card: '#1e293b',
+    cardLight: '#334155',
+    text: '#ffffff',
+    textSecondary: '#e2e8f0',
+    textMuted: '#94a3b8',
+    border: '#475569',
+    error: '#ef4444',
+    success: '#10b981',
+    warning: '#f59e0b'
+  };
+
+  const containerStyles = {
+    maxWidth: '800px',
+    margin: '20px auto',
+    padding: '30px',
+    background: colors.card,
+    color: colors.text,
+    borderRadius: '16px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+    border: `1px solid ${colors.border}`
+  };
+
+  const titleStyles = {
+    fontSize: '2rem',
+    marginBottom: '25px',
+    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    fontWeight: 700,
+    textAlign: 'center'
+  };
+
+  const formGroupStyles = {
+    marginBottom: '20px'
+  };
+
+  const labelStyles = {
+    display: 'block',
+    fontWeight: 600,
+    marginBottom: '8px',
+    color: colors.textSecondary,
+    fontSize: '0.95rem'
+  };
+
+  const inputStyles = {
+    width: '100%',
+    padding: '12px 16px',
+    fontSize: '16px',
+    border: `2px solid ${colors.border}`,
+    borderRadius: '12px',
+    background: colors.background,
+    color: colors.text,
+    transition: 'all 0.2s ease',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box'
+  };
+
+  const textareaStyles = {
+    ...inputStyles,
+    minHeight: '100px',
+    resize: 'vertical',
+    lineHeight: '1.5'
+  };
+
+  const selectStyles = {
+    ...inputStyles,
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='${encodeURIComponent(colors.textMuted)}' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 16px center',
+    backgroundSize: '12px'
+  };
+
+  const buttonStyles = {
+    padding: '12px 24px',
+    background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+    color: 'white',
+    border: 'none',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    fontWeight: 600,
+    transition: 'all 0.2s ease',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+  };
+
+  const errorStyles = {
+    color: colors.error,
+    background: `rgba(239, 68, 68, 0.1)`,
+    padding: '12px 16px',
+    borderRadius: '12px',
+    borderLeft: `4px solid ${colors.error}`,
+    fontWeight: 600,
+    marginBottom: '20px'
+  };
+
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
+    if (!user) navigate('/login');
+    getCurrentLocation();
   }, [user, navigate]);
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser.');
+      return;
+    }
+    
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setLatitude(lat.toString());
+        setLongitude(lng.toString());
+        
+        try {
+          const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+          );
+          const data = await response.json();
+          setLocation(data.locality || data.city || data.principalSubdivision || 'Unknown location');
+        } catch (err) {
+          setLocation('Location detected');
+        }
+        
+        setLocationLoading(false);
+      },
+      (err) => {
+        alert('Error getting location: ' + err.message);
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
     if (!crimeType || !description || !location || !time) {
       setError('Please fill in all required fields.');
       return;
     }
-
     setLoading(true);
-
     try {
       const reportData = {
         crimeType,
@@ -150,9 +184,8 @@ const ReportCrime = () => {
         location,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
-        time
+        time,
       };
-
       if (editId) {
         await updateReport(editId, reportData);
         alert('Crime report updated successfully!');
@@ -160,7 +193,6 @@ const ReportCrime = () => {
         await submitReport(reportData);
         alert('Crime report submitted successfully!');
       }
-
       setCrimeType('');
       setDescription('');
       setLocation('');
@@ -168,7 +200,6 @@ const ReportCrime = () => {
       setLongitude('');
       setTime('');
       setEditId(null);
-      
       await fetchReports();
     } catch (err) {
       setError(err.message);
@@ -189,10 +220,7 @@ const ReportCrime = () => {
   };
 
   const handleDelete = async (reportId) => {
-    if (!window.confirm('Are you sure you want to delete this report?')) {
-      return;
-    }
-
+    if (!window.confirm('Are you sure you want to delete this report?')) return;
     try {
       await deleteReport(reportId);
       alert('Report deleted successfully!');
@@ -202,34 +230,20 @@ const ReportCrime = () => {
     }
   };
 
-  const toggleViewRecord = (recordId) => {
-    setViewRecordId(viewRecordId === recordId ? null : recordId);
-  };
-
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLatitude(position.coords.latitude.toString());
-          setLongitude(position.coords.longitude.toString());
-        },
-        (error) => {
-          alert('Error getting location: ' + error.message);
-        }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
-    }
+  const toggleViewRecord = (id) => {
+    setViewRecordId(viewRecordId === id ? null : id);
   };
 
   return (
-    <Container>
-      <Title>{editId ? 'Edit Crime Report' : 'Report a Crime'}</Title>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-      <Form onSubmit={handleSubmit}>
-        <FormGroup>
-          <Label htmlFor="crimeType">Type of Crime:</Label>
-          <Select
+    <div style={containerStyles}>
+      <h2 style={titleStyles}>{editId ? 'Edit Crime Report' : 'Report a Crime'}</h2>
+      {error && <div style={errorStyles}>{error}</div>}
+      
+      <form onSubmit={handleSubmit} style={{ marginBottom: '30px' }}>
+        <div style={formGroupStyles}>
+          <label style={labelStyles} htmlFor="crimeType">Type of Crime:</label>
+          <select
+            style={selectStyles}
             id="crimeType"
             value={crimeType}
             onChange={(e) => setCrimeType(e.target.value)}
@@ -240,122 +254,253 @@ const ReportCrime = () => {
             <option value="Assault">Assault</option>
             <option value="Vandalism">Vandalism</option>
             <option value="Other">Other</option>
-          </Select>
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="description">Description:</Label>
-          <TextArea
+          </select>
+        </div>
+
+        <div style={formGroupStyles}>
+          <label style={labelStyles} htmlFor="description">Description:</label>
+          <textarea
+            style={textareaStyles}
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Describe the crime..."
             required
           />
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="location">Location:</Label>
-          <Input
-            type="text"
+        </div>
+
+        <div style={formGroupStyles}>
+          <label style={labelStyles} htmlFor="location">Location:</label>
+          <input
+            style={inputStyles}
             id="location"
+            type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Enter the location..."
             required
           />
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="latitude">Latitude (Optional):</Label>
-          <Input
-            type="number"
-            step="any"
-            id="latitude"
-            value={latitude}
-            onChange={(e) => setLatitude(e.target.value)}
-            placeholder="Enter latitude..."
-          />
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="longitude">Longitude (Optional):</Label>
-          <Input
-            type="number"
-            step="any"
-            id="longitude"
-            value={longitude}
-            onChange={(e) => setLongitude(e.target.value)}
-            placeholder="Enter longitude..."
-          />
-          <Button type="button" onClick={getCurrentLocation} style={{ marginTop: '10px' }}>
-            Use Current Location
-          </Button>
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="time">Time:</Label>
-          <Input
-            type="datetime-local"
+        </div>
+
+        <div style={formGroupStyles}>
+          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyles} htmlFor="latitude">Latitude:</label>
+              <input
+                style={inputStyles}
+                id="latitude"
+                type="number"
+                step="any"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+                placeholder="Auto-detected"
+                readOnly
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyles} htmlFor="longitude">Longitude:</label>
+              <input
+                style={inputStyles}
+                id="longitude"
+                type="number"
+                step="any"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+                placeholder="Auto-detected"
+                readOnly
+              />
+            </div>
+          </div>
+          <button 
+            type="button" 
+            onClick={getCurrentLocation}
+            style={{ 
+              ...buttonStyles, 
+              background: colors.secondary,
+              marginTop: '10px',
+              opacity: locationLoading ? 0.6 : 1
+            }}
+            disabled={locationLoading}
+          >
+            {locationLoading ? 'Detecting Location...' : 'Refresh Location'}
+          </button>
+        </div>
+
+        <div style={formGroupStyles}>
+          <label style={labelStyles} htmlFor="time">Time:</label>
+          <input
+            style={inputStyles}
             id="time"
+            type="datetime-local"
             value={time}
             onChange={(e) => setTime(e.target.value)}
             required
           />
-        </FormGroup>
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Submitting...' : (editId ? 'Update Report' : 'Submit Report')}
-        </Button>
-        {editId && (
-          <Button 
-            type="button" 
-            onClick={() => {
-              setEditId(null);
-              setCrimeType('');
-              setDescription('');
-              setLocation('');
-              setLatitude('');
-              setLongitude('');
-              setTime('');
-            }}
-            style={{ marginLeft: '10px', backgroundColor: '#666' }}
-          >
-            Cancel Edit
-          </Button>
-        )}
-      </Form>
+        </div>
 
-      <PreviousReports>
-        <h3 style={{ fontSize: '24px', marginBottom: '15px' }}>Your Previous Reports</h3>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{ 
+              ...buttonStyles, 
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {loading ? 'Submitting...' : editId ? 'Update Report' : 'Submit Report'}
+          </button>
+
+          {editId && (
+            <button
+              type="button"
+              onClick={() => {
+                setEditId(null);
+                setCrimeType('');
+                setDescription('');
+                setLocation('');
+                setLatitude('');
+                setLongitude('');
+                setTime('');
+              }}
+              style={{ 
+                ...buttonStyles, 
+                background: colors.cardLight,
+                color: colors.textSecondary
+              }}
+            >
+              Cancel Edit
+            </button>
+          )}
+        </div>
+      </form>
+
+      <div style={{ marginTop: '40px', paddingTop: '30px', borderTop: `1px solid ${colors.border}` }}>
+        <h3 style={{ fontSize: '1.5rem', marginBottom: '20px', color: colors.text, fontWeight: 600 }}>
+          Your Previous Reports
+        </h3>
         {reports.length === 0 ? (
-          <p>No records available.</p>
+          <p style={{ color: colors.textMuted, textAlign: 'center', padding: '20px' }}>
+            No crime reports submitted yet.
+          </p>
         ) : (
           reports.map((report) => (
-            <ReportItem key={report.id} onClick={() => toggleViewRecord(report.id)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ margin: '0' }}>{report.crimeType}</h4>
-                <p style={{ margin: '5px 0 0', fontSize: '14px', color: '#fff' }}>{report.description}</p>
+            <div 
+              key={report.id} 
+              onClick={() => toggleViewRecord(report.id)}
+              style={{
+                marginBottom: '15px',
+                padding: '20px',
+                background: colors.background,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '12px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '15px' }}>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ margin: 0, color: colors.text, fontWeight: 600, fontSize: '1.1rem' }}>
+                    {report.crimeType}
+                  </h4>
+                  <p style={{ margin: '8px 0 0', color: colors.textMuted, fontSize: '0.9rem', lineHeight: '1.4' }}>
+                    {report.description.length > 100 ? `${report.description.substring(0, 100)}...` : report.description}
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ 
+                    padding: '4px 8px', 
+                    background: report.status === 'pending' ? colors.warning : colors.success,
+                    color: colors.text,
+                    borderRadius: '6px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600
+                  }}>
+                    {report.status?.charAt(0).toUpperCase() + report.status?.slice(1) || 'Pending'}
+                  </div>
+                  <p style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: '0.8rem' }}>
+                    {new Date(report.time).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
+              
               {viewRecordId === report.id && (
-                <Details>
-                  <p style={{ fontWeight: 'bold', marginBottom: '5px', color: '#fff' }}>Details:</p>
-                  <p style={{ color: '#fff' }}>Location: {report.location}</p>
-                  {report.latitude && <p style={{ color: '#fff' }}>Latitude: {report.latitude}</p>}
-                  {report.longitude && <p style={{ color: '#fff' }}>Longitude: {report.longitude}</p>}
-                  <p style={{ color: '#fff' }}>Time: {new Date(report.time).toLocaleString()}</p>
-                  <p style={{ color: '#fff' }}>Status: {report.status}</p>
-                  <ButtonGroup><button onClick={(e) => { e.stopPropagation(); handleEdit(report); }}>
-                      Edit
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleDelete(report.id); }}
-                      style={{ backgroundColor: '#d9534f' }}
+                <div style={{
+                  marginTop: '15px',
+                  padding: '20px',
+                  background: colors.cardLight,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '12px'
+                }}>
+                  <p style={{ fontWeight: 'bold', marginBottom: '15px', color: colors.text, fontSize: '1.1rem' }}>
+                    Report Details
+                  </p>
+                  <div style={{ display: 'grid', gap: '10px' }}>
+                    <p style={{ color: colors.textSecondary, margin: 0 }}>
+                      <strong>Location:</strong> {report.location}
+                    </p>
+                    {report.latitude && (
+                      <p style={{ color: colors.textSecondary, margin: 0 }}>
+                        <strong>Latitude:</strong> {report.latitude}
+                      </p>
+                    )}
+                    {report.longitude && (
+                      <p style={{ color: colors.textSecondary, margin: 0 }}>
+                        <strong>Longitude:</strong> {report.longitude}
+                      </p>
+                    )}
+                    <p style={{ color: colors.textSecondary, margin: 0 }}>
+                      <strong>Time:</strong> {new Date(report.time).toLocaleString()}
+                    </p>
+                    <p style={{ color: colors.textSecondary, margin: 0 }}>
+                      <strong>Status:</strong> {report.status}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(report);
+                      }}
+                      style={{ 
+                        padding: '8px 16px',
+                        background: colors.secondary,
+                        color: colors.text,
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        fontWeight: 500
+                      }}
                     >
-                      Delete
+                      Edit Report
                     </button>
-                  </ButtonGroup>
-                </Details>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(report.id);
+                      }}
+                      style={{ 
+                        padding: '8px 16px',
+                        background: colors.error,
+                        color: colors.text,
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        fontWeight: 500
+                      }}
+                    >
+                      Delete Report
+                    </button>
+                  </div>
+                </div>
               )}
-            </ReportItem>
+            </div>
           ))
         )}
-      </PreviousReports>
-    </Container>
+      </div>
+    </div>
   );
 };
 

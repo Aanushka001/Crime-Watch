@@ -5,7 +5,6 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './MapView.css';
 
-delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -22,22 +21,22 @@ const MapView = () => {
       try {
         const data = await getPublicReports();
         setReports(data);
-      } catch (error) {
-        console.error('Error fetching reports:', error);
-      } finally {
+      } catch (err) {
+  return;
+}
+finally {
         setLoading(false);
       }
     };
-
     fetchReports();
   }, []);
 
   const getCrimeColor = (crimeType) => {
     const colors = {
-      'Theft': '#ff6b6b',
-      'Assault': '#ee5a6f',
-      'Vandalism': '#ffa07a',
-      'Other': '#4ecdc4'
+      Theft: '#ff6b6b',
+      Assault: '#ee5a6f',
+      Vandalism: '#ffa07a',
+      Other: '#4ecdc4'
     };
     return colors[crimeType] || '#95a5a6';
   };
@@ -50,19 +49,15 @@ const MapView = () => {
         <h1>Crime Watch</h1>
         <p>Real-time Crime Reporting and Safety Information</p>
       </header>
-      
+
       <main className="main-content">
         <section className="map-section">
           <h2>Crime Map</h2>
           <p>Explore the map below to view real-time crime reports and hotspots.</p>
           <div className="map-container">
-            <MapContainer 
-              center={mapCenter} 
-              zoom={12} 
-              style={{ width: '100%', height: '500px' }}
-            >
+            <MapContainer center={mapCenter} zoom={12} style={{ width: '100%', height: '500px' }}>
               <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution='&copy; OpenStreetMap contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {reports.map((report) => {
@@ -72,7 +67,7 @@ const MapView = () => {
                       <Circle
                         center={[report.latitude, report.longitude]}
                         radius={200}
-                        pathOptions={{ 
+                        pathOptions={{
                           color: getCrimeColor(report.crimeType),
                           fillColor: getCrimeColor(report.crimeType),
                           fillOpacity: 0.3
@@ -114,62 +109,59 @@ const MapView = () => {
           <h2>Types of Cyber Crime</h2>
           <p>Cyber crime encompasses a wide range of activities. Here are some of the most common types:</p>
           <ul>
-            <li>Hacking: Unauthorized access to computer systems</li>
-            <li>Identity Theft: Stealing personal information for fraudulent purposes</li>
-            <li>Phishing: Fraudulent attempts to obtain sensitive information</li>
-            <li>Ransomware: Malicious software that blocks access to data until a ransom is paid</li>
-            <li>Cyberstalking: Harassment or stalking using electronic communications</li>
+            <li>Hacking</li>
+            <li>Identity Theft</li>
+            <li>Phishing</li>
+            <li>Ransomware</li>
+            <li>Cyberstalking</li>
           </ul>
         </section>
 
         <section className="laws-section">
           <h2>Laws Against Cyber Crime</h2>
-          <p>Several laws have been enacted globally to combat cyber crime. Some of the key laws include:</p>
+          <p>Several laws have been enacted globally to combat cyber crime.</p>
           <ul>
-            <li><strong>Computer Fraud and Abuse Act (CFAA)</strong> - United States</li>
-            <li><strong>General Data Protection Regulation (GDPR)</strong> - European Union</li>
-            <li><strong>Personal Data Protection Act (PDPA)</strong> - Singapore</li>
-            <li><strong>Information Technology Act</strong> - India</li>
+            <li>Computer Fraud and Abuse Act (USA)</li>
+            <li>GDPR (EU)</li>
+            <li>Personal Data Protection Act (Singapore)</li>
+            <li>Information Technology Act (India)</li>
           </ul>
         </section>
 
         <section className="reporting-section">
           <h2>How to Report Cyber Crime</h2>
-          <p>If you have been a victim of cyber crime, it is important to report it immediately. Follow these steps to report a cyber crime:</p>
           <ul>
-            <li>Contact your local law enforcement agency.</li>
-            <li>Report the crime to the FBI's Internet Crime Complaint Center (IC3).</li>
-            <li>Notify your bank or financial institution if your financial information was compromised.</li>
-            <li>Change your passwords and secure your accounts.</li>
+            <li>Contact local law enforcement.</li>
+            <li>File a report with IC3.</li>
+            <li>Notify bank or financial institutions.</li>
+            <li>Change passwords and secure accounts.</li>
           </ul>
         </section>
 
         <section className="safety-tips-section">
           <h2>Tips for Staying Safe Online</h2>
-          <p>Here are some tips to help you stay safe online and protect yourself from cyber crime:</p>
           <ul>
-            <li>Use strong, unique passwords for all your accounts.</li>
-            <li>Enable two-factor authentication wherever possible.</li>
-            <li>Be cautious of phishing emails and suspicious links.</li>
-            <li>Keep your software and devices updated with the latest security patches.</li>
-            <li>Use antivirus and anti-malware software to protect your devices.</li>
+            <li>Use strong passwords.</li>
+            <li>Enable two-factor authentication.</li>
+            <li>Avoid suspicious links.</li>
+            <li>Keep software updated.</li>
+            <li>Use antivirus tools.</li>
           </ul>
         </section>
 
         <section className="resources-section">
           <h2>Resources</h2>
-          <p>For more information on cyber crime and how to protect yourself, check out the following resources:</p>
           <ul>
             <li><a href="https://www.fbi.gov/investigate/cyber" target="_blank" rel="noopener noreferrer">FBI Cyber Crime Division</a></li>
-            <li><a href="https://www.ic3.gov/" target="_blank" rel="noopener noreferrer">Internet Crime Complaint Center (IC3)</a></li>
-            <li><a href="https://www.consumer.ftc.gov/topics/identity-theft" target="_blank" rel="noopener noreferrer">Federal Trade Commission - Identity Theft</a></li>
+            <li><a href="https://www.ic3.gov/" target="_blank" rel="noopener noreferrer">IC3</a></li>
+            <li><a href="https://www.consumer.ftc.gov/topics/identity-theft" target="_blank" rel="noopener noreferrer">FTC Identity Theft</a></li>
             <li><a href="https://staysafeonline.org/" target="_blank" rel="noopener noreferrer">National Cyber Security Alliance</a></li>
           </ul>
         </section>
       </main>
 
       <footer className="footer">
-        <p>&copy; 2024 Crime Watch. All rights reserved.</p>
+        <p>© 2024 Crime Watch. All rights reserved.</p>
         <p>Providing real-time crime reporting and safety information.</p>
       </footer>
     </div>

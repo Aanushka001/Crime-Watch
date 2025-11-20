@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { auth } from './firebase';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL =
+  window._env_?.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -19,25 +20,13 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.error('Unauthorized - redirecting to login');
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
-
-export const registerUser = async (email, password, name) => {
-  const response = await apiClient.post('/auth/register', { email, password, name });
-  return response.data;
-};
 
 export const getUserProfile = async () => {
   const response = await apiClient.get('/auth/profile');
@@ -55,7 +44,9 @@ export const getUserReports = async () => {
 };
 
 export const getPublicReports = async (limit = 100) => {
-  const response = await apiClient.get('/reports/public', { params: { limit } });
+  const response = await apiClient.get('/reports/public', {
+    params: { limit }
+  });
   return response.data;
 };
 

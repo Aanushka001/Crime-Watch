@@ -1,5 +1,5 @@
 const admin = require('firebase-admin');
-const { createUser, getUserById } = require('../models/User');
+const { createUser, getUserById, deleteUser } = require('../models/User');
 
 const registerUser = async (req, res) => {
   try {
@@ -18,7 +18,12 @@ const registerUser = async (req, res) => {
     await createUser({
       uid: userRecord.uid,
       email: userRecord.email,
-      name: name
+      username: name,
+      userType: 'user',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastLogin: new Date()
     });
 
     return res.status(201).json({

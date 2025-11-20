@@ -4,7 +4,6 @@ import { FaUser } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext';
 import { auth } from '../../utils/firebase';
 import { signOut } from 'firebase/auth';
-import './Header.css';
 
 const Header = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -21,7 +20,8 @@ const Header = () => {
       setShowProfileMenu(false);
       navigate('/login');
     } catch (error) {
-      console.error('Logout error:', error);
+        console.error(error);
+
     }
   };
 

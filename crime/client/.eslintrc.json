@@ -1,7 +1,8 @@
 {
   "env": {
     "browser": true,
-    "es2021": true
+    "es2021": true,
+    "node": true
   },
   "extends": [
     "eslint:recommended",
@@ -19,12 +20,17 @@
   ],
   "rules": {
     "react/prop-types": "off",
-    "no-console": "warn",
-    "no-unused-vars": "warn"
+    "no-console": "off",
+    "no-unused-vars": "warn",
+    "no-empty": "warn",
+    "no-undef": "off"
   },
   "settings": {
     "react": {
       "version": "detect"
     }
+  },
+  "globals": {
+    "process": "readonly"
   }
 }

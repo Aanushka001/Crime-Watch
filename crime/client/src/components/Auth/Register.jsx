@@ -1,92 +1,8 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import { useNavigate, Link } from 'react-router-dom';
 import { auth } from '../../utils/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { AuthContext } from '../../context/AuthContext';
-import { registerUser } from '../../utils/api';
-import backgroundImage from './login.jpg';
-
-const RegisterContainer = styled.div`
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const BlurBackground = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url(${backgroundImage});
-  background-size: cover;
-  filter: blur(8px);
-`;
-
-const ContentContainer = styled.div`
-  position: relative;
-  z-index: 1;
-  max-width: 400px;
-  margin: auto;
-  padding: 20px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-`;
-
-const RegisterForm = styled.form`
-  display: flex;
-  flex-direction: column;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 15px;
-`;
-
-const Label = styled.label`
-  font-weight: bold;
-`;
-
-const Input = styled.input`
-  width: 94%;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-`;
-
-const ErrorMessage = styled.p`
-  color: red;
-  margin-top: 10px;
-`;
-
-const SuccessMessage = styled.p`
-  color: green;
-  margin-top: 10px;
-`;
-
-const SubmitButton = styled.button`
-  background-color: #2196F3;
-  color: #fff;
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #0d8bf0;
-  }
-
-  &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-`;
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -105,8 +21,6 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await registerUser(email, password, username);
-      
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
       await updateProfile(userCredential.user, {
@@ -114,66 +28,85 @@ const Register = () => {
       });
 
       setUser(userCredential.user);
-      setSuccess('Registration successful! Redirecting...');
+      setSuccess('Account created successfully! Redirecting...');
       
       setTimeout(() => {
         navigate('/');
       }, 2000);
     } catch (err) {
-      setError(err.message);
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email is already registered. Please use a different email or sign in.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password is too weak. Please use a stronger password.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Invalid email address. Please check your email format.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <RegisterContainer>
-      <BlurBackground />
-      <ContentContainer>
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Register</h2>
-        <RegisterForm onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label htmlFor="username">Username</Label>
-            <Input
+    <div className="auth-container">
+      <div className="auth-card">
+        <h1 className="auth-title">Create Account</h1>
+        <p className="auth-subtitle">Join Crime Watch today</p>
+        
+        {error && <div className="auth-error">{error}</div>}
+        {success && <div className="auth-success">{success}</div>}
+        
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="auth-input-group">
+            <label className="auth-label">Username</label>
+            <input
+              className="auth-input"
               type="text"
-              id="username"
-              placeholder="Enter your username"
+              placeholder="Choose a username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
             />
-          </FormGroup>
-          <FormGroup>
-            <Label htmlFor="email">Email</Label>
-            <Input
+          </div>
+
+          <div className="auth-input-group">
+            <label className="auth-label">Email Address</label>
+            <input
+              className="auth-input"
               type="email"
-              id="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-          </FormGroup>
-          <FormGroup>
-            <Label htmlFor="password">Password</Label>
-            <Input
+          </div>
+
+          <div className="auth-input-group">
+            <label className="auth-label">Password</label>
+            <input
+              className="auth-input"
               type="password"
-              id="password"
-              placeholder="Enter your password"
+              placeholder="Create a password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength="6"
             />
-          </FormGroup>
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-          {success && <SuccessMessage>{success}</SuccessMessage>}
-          <SubmitButton type="submit" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
-          </SubmitButton>
-        </RegisterForm>
-      </ContentContainer>
-    </RegisterContainer>
+            <span className="auth-hint">Must be at least 6 characters</span>
+          </div>
+
+          <button className="auth-button" type="submit" disabled={loading}>
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
+
+        <div className="auth-link-container">
+          Already have an account?
+          <Link to="/login" className="auth-link">Sign in</Link>
+        </div>
+      </div>
+    </div>
   );
 };
 

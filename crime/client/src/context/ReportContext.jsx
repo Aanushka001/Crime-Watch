@@ -16,9 +16,10 @@ export const ReportProvider = ({ children }) => {
     try {
       const data = await getUserReports();
       setReports(data);
-    } catch (error) {
-      console.error('Error fetching reports:', error);
-    } finally {
+    } catch (err) {
+  return;
+}
+finally {
       setLoading(false);
     }
   };

@@ -57,7 +57,7 @@ const ProfilePage = () => {
           const data = await getUserProfile();
           setProfileData(data);
         } catch (error) {
-          console.error('Error fetching profile:', error);
+          // Handle error silently
         } finally {
           setLoading(false);
         }

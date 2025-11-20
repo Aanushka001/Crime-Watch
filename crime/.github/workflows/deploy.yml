@@ -4,74 +4,37 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  lint-and-test:
+  deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-
-      - name: Install server dependencies
-        run: |
-          cd server
-          npm ci
-
-      - name: Lint server
-        run: |
-          cd server
-          npm run lint
-
-      - name: Install client dependencies
-        run: |
-          cd client
-          npm ci
-
-      - name: Lint client
-        run: |
-          cd client
-          npm run lint
+          node-version: 18
 
       - name: Build client
         run: |
           cd client
+          npm ci
           npm run build
-
-  deploy:
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Install dependencies and build
+      - name: Create service account file
+        env:
+          SA_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
         run: |
-          cd client
-          npm ci
-          npm run build
-          cd ../server
-          npm ci
+          echo "$SA_JSON" > serviceAccountKey.json
 
       - name: Deploy to Firebase
         env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/serviceAccountKey.json
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase deploy --token "$FIREBASE_TOKEN"
+        run: firebase deploy

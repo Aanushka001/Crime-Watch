@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import { getPublicReports } from '../../utils/api';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import './MapView.css';
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -22,9 +21,8 @@ const MapView = () => {
         const data = await getPublicReports();
         setReports(data);
       } catch (err) {
-  return;
-}
-finally {
+        return;
+      } finally {
         setLoading(false);
       }
     };
@@ -45,12 +43,12 @@ finally {
 
   return (
     <div className="map-page">
-      <header className="header">
+      <header className="map-header">
         <h1>Crime Watch</h1>
         <p>Real-time Crime Reporting and Safety Information</p>
       </header>
 
-      <main className="main-content">
+      <main className="map-main-content">
         <section className="map-section">
           <h2>Crime Map</h2>
           <p>Explore the map below to view real-time crime reports and hotspots.</p>
@@ -160,7 +158,7 @@ finally {
         </section>
       </main>
 
-      <footer className="footer">
+      <footer className="map-footer">
         <p>© 2024 Crime Watch. All rights reserved.</p>
         <p>Providing real-time crime reporting and safety information.</p>
       </footer>

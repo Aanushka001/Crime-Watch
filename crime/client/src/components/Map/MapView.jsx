@@ -1,14 +1,48 @@
-import React from 'react';
-import { GoogleMap, useLoadScript } from '@react-google-maps/api';
-import HeatmapLayer from './HeatmapLayer';
-import './MapView.css'; // Ensure this path is correct
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { getPublicReports } from '../../utils/api';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import './MapView.css';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
+});
 
 const MapView = () => {
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
-  });
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [mapCenter] = useState([37.7749, -122.4194]);
 
-  if (!isLoaded) return <div className="loading">Loading...</div>;
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const data = await getPublicReports();
+        setReports(data);
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, []);
+
+  const getCrimeColor = (crimeType) => {
+    const colors = {
+      'Theft': '#ff6b6b',
+      'Assault': '#ee5a6f',
+      'Vandalism': '#ffa07a',
+      'Other': '#4ecdc4'
+    };
+    return colors[crimeType] || '#95a5a6';
+  };
+
+  if (loading) return <div className="loading">Loading map...</div>;
 
   return (
     <div className="map-page">
@@ -18,23 +52,53 @@ const MapView = () => {
       </header>
       
       <main className="main-content">
-      <section className="map-section">
+        <section className="map-section">
           <h2>Crime Map</h2>
           <p>Explore the map below to view real-time crime reports and hotspots.</p>
           <div className="map-container">
-            <GoogleMap
-              mapContainerStyle={{ width: '100%', height: '100%' }}
-              zoom={10}
-              center={{ lat: 37.7749, lng: -122.4194 }}
+            <MapContainer 
+              center={mapCenter} 
+              zoom={12} 
+              style={{ width: '100%', height: '500px' }}
             >
-              <HeatmapLayer />
-            </GoogleMap>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {reports.map((report) => {
+                if (report.latitude && report.longitude) {
+                  return (
+                    <React.Fragment key={report.id}>
+                      <Circle
+                        center={[report.latitude, report.longitude]}
+                        radius={200}
+                        pathOptions={{ 
+                          color: getCrimeColor(report.crimeType),
+                          fillColor: getCrimeColor(report.crimeType),
+                          fillOpacity: 0.3
+                        }}
+                      />
+                      <Marker position={[report.latitude, report.longitude]}>
+                        <Popup>
+                          <strong>{report.crimeType}</strong><br />
+                          {report.description}<br />
+                          <em>{report.location}</em>
+                        </Popup>
+                      </Marker>
+                    </React.Fragment>
+                  );
+                }
+                return null;
+              })}
+            </MapContainer>
           </div>
         </section>
+
         <section className="intro-section">
           <h2>About Cyber Crime</h2>
           <p>Cyber crime refers to illegal activities conducted through the internet or other digital means. These crimes include hacking, identity theft, phishing, and more. Cyber criminals use technology to access personal information, steal identities, or manipulate data for fraudulent purposes.</p>
         </section>
+
         <section className="technical-data-section">
           <h2>Technical Data on Cyber Crime</h2>
           <p>According to recent reports, cyber crime costs the global economy billions of dollars each year. The most common types of cyber crimes include:</p>
@@ -45,6 +109,7 @@ const MapView = () => {
             <li>Denial of Service (DoS): 15% of attacks target large enterprises</li>
           </ul>
         </section>
+
         <section className="types-section">
           <h2>Types of Cyber Crime</h2>
           <p>Cyber crime encompasses a wide range of activities. Here are some of the most common types:</p>
@@ -56,6 +121,7 @@ const MapView = () => {
             <li>Cyberstalking: Harassment or stalking using electronic communications</li>
           </ul>
         </section>
+
         <section className="laws-section">
           <h2>Laws Against Cyber Crime</h2>
           <p>Several laws have been enacted globally to combat cyber crime. Some of the key laws include:</p>
@@ -66,7 +132,7 @@ const MapView = () => {
             <li><strong>Information Technology Act</strong> - India</li>
           </ul>
         </section>
-        
+
         <section className="reporting-section">
           <h2>How to Report Cyber Crime</h2>
           <p>If you have been a victim of cyber crime, it is important to report it immediately. Follow these steps to report a cyber crime:</p>
@@ -77,6 +143,7 @@ const MapView = () => {
             <li>Change your passwords and secure your accounts.</li>
           </ul>
         </section>
+
         <section className="safety-tips-section">
           <h2>Tips for Staying Safe Online</h2>
           <p>Here are some tips to help you stay safe online and protect yourself from cyber crime:</p>
@@ -88,6 +155,7 @@ const MapView = () => {
             <li>Use antivirus and anti-malware software to protect your devices.</li>
           </ul>
         </section>
+
         <section className="resources-section">
           <h2>Resources</h2>
           <p>For more information on cyber crime and how to protect yourself, check out the following resources:</p>
@@ -99,6 +167,7 @@ const MapView = () => {
           </ul>
         </section>
       </main>
+
       <footer className="footer">
         <p>&copy; 2024 Crime Watch. All rights reserved.</p>
         <p>Providing real-time crime reporting and safety information.</p>

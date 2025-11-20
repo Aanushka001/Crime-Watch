@@ -1,28 +1,62 @@
-const passport = require('passport');
+const admin = require('firebase-admin');
+const { createUser, getUserById } = require('../models/User');
 
-// Login with Google
-const loginWithGoogle = passport.authenticate('google', { scope: ['profile', 'email'] });
+const registerUser = async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
 
-// Google callback
-const googleCallback = passport.authenticate('google', { failureRedirect: '/login' });
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-// Login with Facebook
-const loginWithFacebook = passport.authenticate('facebook', { scope: ['email'] });
+    const userRecord = await admin.auth().createUser({
+      email,
+      password,
+      displayName: name
+    });
 
-// Facebook callback
-const facebookCallback = passport.authenticate('facebook', { failureRedirect: '/login' });
+    await createUser({
+      uid: userRecord.uid,
+      email: userRecord.email,
+      name: name
+    });
 
-// Logout
-const logout = (req, res) => {
-  req.logout(() => {
-    res.redirect('/');
-  });
+    return res.status(201).json({
+      message: 'User registered successfully',
+      uid: userRecord.uid
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const getUserProfile = async (req, res) => {
+  try {
+    const user = await getUserById(req.user.uid);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error('Get profile error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteUserAccount = async (req, res) => {
+  try {
+    await admin.auth().deleteUser(req.user.uid);
+    await deleteUser(req.user.uid);
+    return res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    return res.status(500).json({ error: error.message });
+  }
 };
 
 module.exports = {
-  loginWithGoogle,
-  googleCallback,
-  loginWithFacebook,
-  facebookCallback,
-  logout,
+  registerUser,
+  getUserProfile,
+  deleteUserAccount
 };

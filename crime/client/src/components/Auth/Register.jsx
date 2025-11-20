@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import backgroundImage from './login.jpg'; // Import your background image
+import { auth } from '../../utils/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { AuthContext } from '../../context/AuthContext';
+import { registerUser } from '../../utils/api';
+import backgroundImage from './login.jpg';
 
 const RegisterContainer = styled.div`
   position: relative;
@@ -18,16 +23,16 @@ const BlurBackground = styled.div`
   height: 100%;
   background-image: url(${backgroundImage});
   background-size: cover;
-  filter: blur(8px); /* Adjust blur intensity as needed */
+  filter: blur(8px);
 `;
 
 const ContentContainer = styled.div`
   position: relative;
-  z-index: 1; /* Ensure content is above blurred background */
+  z-index: 1;
   max-width: 400px;
   margin: auto;
   padding: 20px;
-  background-color: rgba(255, 255, 255, 0.8); /* Adjust opacity for clarity */
+  background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid #ccc;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -59,6 +64,11 @@ const ErrorMessage = styled.p`
   margin-top: 10px;
 `;
 
+const SuccessMessage = styled.p`
+  color: green;
+  margin-top: 10px;
+`;
+
 const SubmitButton = styled.button`
   background-color: #2196F3;
   color: #fff;
@@ -71,6 +81,11 @@ const SubmitButton = styled.button`
   &:hover {
     background-color: #0d8bf0;
   }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
 `;
 
 const Register = () => {
@@ -78,11 +93,37 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { setUser } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Implement form submission logic here
-    console.log('Form submitted:', { username, password, email });
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      await registerUser(email, password, username);
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      await updateProfile(userCredential.user, {
+        displayName: username
+      });
+
+      setUser(userCredential.user);
+      setSuccess('Registration successful! Redirecting...');
+      
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -103,17 +144,6 @@ const Register = () => {
             />
           </FormGroup>
           <FormGroup>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              type="password"
-              id="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </FormGroup>
-          <FormGroup>
             <Label htmlFor="email">Email</Label>
             <Input
               type="email"
@@ -124,8 +154,23 @@ const Register = () => {
               required
             />
           </FormGroup>
+          <FormGroup>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              type="password"
+              id="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength="6"
+            />
+          </FormGroup>
           {error && <ErrorMessage>{error}</ErrorMessage>}
-          <SubmitButton type="submit">Register</SubmitButton>
+          {success && <SuccessMessage>{success}</SuccessMessage>}
+          <SubmitButton type="submit" disabled={loading}>
+            {loading ? 'Registering...' : 'Register'}
+          </SubmitButton>
         </RegisterForm>
       </ContentContainer>
     </RegisterContainer>

@@ -1,19 +1,9 @@
-import React from 'react';
+import React, { useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { AuthContext } from '../../context/AuthContext';
+import { getUserProfile } from '../../utils/api';
 
-// Sample user data
-const user = {
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  dob: 'January 1, 1980',
-  address: '123 Main St, New York, NY, USA',
-  phone: '+1 (555) 123-4567',
-  occupation: 'Software Engineer',
-  bio: 'Passionate about technology and cyber security. I love to educate others about the importance of online safety and digital ethics.',
-  hobbies: 'Reading, Traveling, Coding, and Hiking'
-};
-
-// Styled components for styling the profile page
 const ProfileContainer = styled.div`
   max-width: 600px;
   margin: 20px auto;
@@ -43,42 +33,71 @@ const ProfileBio = styled.div`
   margin-bottom: 20px;
 `;
 
+const LoadingMessage = styled.p`
+  text-align: center;
+  color: #f9a825;
+`;
+
 const ProfilePage = () => {
+  const { user, loading: authLoading } = useContext(AuthContext);
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/login');
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const data = await getUserProfile();
+          setProfileData(data);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  if (loading || authLoading) {
+    return (
+      <ProfileContainer>
+        <LoadingMessage>Loading profile...</LoadingMessage>
+      </ProfileContainer>
+    );
+  }
+
   return (
     <ProfileContainer>
       <ProfileHeader>User Profile</ProfileHeader>
       
       <ProfileDetails>
         <DetailItem>
-          <strong>Name:</strong> {user.name}
+          <strong>Name:</strong> {user?.displayName || 'N/A'}
         </DetailItem>
         <DetailItem>
-          <strong>Email:</strong> {user.email}
+          <strong>Email:</strong> {user?.email || 'N/A'}
         </DetailItem>
         <DetailItem>
-          <strong>Date of Birth:</strong> {user.dob}
+          <strong>User ID:</strong> {user?.uid || 'N/A'}
         </DetailItem>
         <DetailItem>
-          <strong>Address:</strong> {user.address}
-        </DetailItem>
-        <DetailItem>
-          <strong>Phone:</strong> {user.phone}
-        </DetailItem>
-        <DetailItem>
-          <strong>Occupation:</strong> {user.occupation}
+          <strong>Account Created:</strong> {profileData?.createdAt ? new Date(profileData.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
         </DetailItem>
       </ProfileDetails>
 
       <ProfileBio>
-        <strong>Bio:</strong>
-        <p>{user.bio}</p>
+        <strong>Account Status:</strong>
+        <p>Active and verified</p>
       </ProfileBio>
-
-      <ProfileDetails>
-        <DetailItem>
-          <strong>Hobbies:</strong> {user.hobbies}
-        </DetailItem>
-      </ProfileDetails>
     </ProfileContainer>
   );
 };

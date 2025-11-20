@@ -1,20 +1,28 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaUser } from 'react-icons/fa'; // Importing the user icon
-import './Header.css'; // Ensure this path is correct
+import React, { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaUser } from 'react-icons/fa';
+import { AuthContext } from '../../context/AuthContext';
+import { auth } from '../../utils/firebase';
+import { signOut } from 'firebase/auth';
+import './Header.css';
 
 const Header = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const toggleProfileMenu = () => {
     setShowProfileMenu(!showProfileMenu);
   };
 
-  const handleLogout = () => {
-    // Implement your logout logic here
-    console.log('Logging out...'); // Placeholder for actual logout action
-    // After logout action, you may redirect or perform other actions as needed
-    setShowProfileMenu(false); // Close the profile menu after logout
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setShowProfileMenu(false);
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
@@ -25,23 +33,31 @@ const Header = () => {
         </div>
         <div className="nav-right">
           <Link to="/" className="nav-link">Home</Link>
-          <Link to="/login" className="nav-link">Login</Link>
-          <Link to="/register" className="nav-link">Register</Link>
-          <Link to="/report" className="nav-link">Report a Crime</Link>
-          <div className="profile-menu">
-            <div onClick={toggleProfileMenu} className="profile-toggle">
-              <FaUser className="profile-icon" />
-              <span>Profile</span>
-            </div>
-            {showProfileMenu && (
-              <div className="profile-dropdown">
-                <ul className="profile-list">
-                  <li className="profile-item"><Link to="/profile" className="profile-link">Show profile</Link></li>
-                  <li className="profile-item" onClick={handleLogout}>Logout</li>
-                </ul>
+          {!user && (
+            <>
+              <Link to="/login" className="nav-link">Login</Link>
+              <Link to="/register" className="nav-link">Register</Link>
+            </>
+          )}
+          {user && <Link to="/report" className="nav-link">Report a Crime</Link>}
+          {user && (
+            <div className="profile-menu">
+              <div onClick={toggleProfileMenu} className="profile-toggle">
+                <FaUser className="profile-icon" />
+                <span>{user.displayName || 'Profile'}</span>
               </div>
-            )}
-          </div>
+              {showProfileMenu && (
+                <div className="profile-dropdown">
+                  <ul className="profile-list">
+                    <li className="profile-item">
+                      <Link to="/profile" className="profile-link">Show profile</Link>
+                    </li>
+                    <li className="profile-item" onClick={handleLogout}>Logout</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </nav>
     </header>

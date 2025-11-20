@@ -450,3 +450,58 @@ a {
 a:hover {
   text-decoration: underline;
 }
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.footer {
+  background-color: #1e1e1e;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+  margin-top: auto;
+  border-top: 1px solid #333;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer p {
+  margin: 0;
+  color: #bbb;
+  font-size: 0.9rem;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.footer-link {
+  color: #f9a825;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+.profile-value {
+  color: #fff;
+  font-size: 1rem;
+  padding: 12px;
+  background: #1a1a1a;
+  border: 2px solid #404040;
+  border-radius: 8px;
+  margin-top: 4px;
+}

@@ -1,34 +1,42 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { AuthContext } from './AuthContext';
 import { getUserReports } from '../utils/api';
 
-export const ReportContext = createContext();
+export const ReportContext = createContext(null);
 
 export const ReportProvider = ({ children }) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { user } = useContext(AuthContext);
 
-  const fetchReports = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      const data = await getUserReports();
-      setReports(data);
-    } catch (err) {
+  const fetchReports = useCallback(async () => {
+    if (!user) {
+      setReports([]);
       return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      setReports(await getUserReports());
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || 'Unable to load your reports.');
+      throw requestError;
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchReports();
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      fetchReports().catch(() => {});
+    } else {
+      setReports([]);
+    }
+  }, [fetchReports, user]);
+
   return (
-    <ReportContext.Provider value={{ reports, setReports, loading, fetchReports }}>
+    <ReportContext.Provider value={{ reports, setReports, loading, error, fetchReports }}>
       {children}
     </ReportContext.Provider>
   );

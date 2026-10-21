@@ -3,25 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@fortawesome/free-brands-svg-icons": "^6.5.2",
-    "@fortawesome/react-fontawesome": "^0.2.2",
-    "axios": "^1.7.2",
-    "cors": "^2.8.5",
-    "firebase": "^10.12.0",
+    "@react-oauth/google": "^0.12.2",
+    "axios": "^1.20.0",
     "leaflet": "^1.9.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-icons": "^5.2.1",
     "react-leaflet": "^4.2.1",
-    "react-router-dom": "^6.24.0",
-    "react-scripts": "5.0.1",
-    "styled-components": "^6.1.11"
+    "react-router-dom": "^7.18.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "start": "vite --host 0.0.0.0",
+    "build": "vite build",
     "lint": "eslint src/"
   },
   "browserslist": {
@@ -37,9 +29,12 @@
     ]
   },
   "devDependencies": {
-    "@types/react": "^19.2.6",
-    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.0"
+    "eslint-plugin-react": "^7.34.0",
+    "vite": "^6.4.1"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

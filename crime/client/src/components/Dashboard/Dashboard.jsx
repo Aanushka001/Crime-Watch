@@ -1,22 +1,27 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { ReportContext } from '../../context/ReportContext';
 import MapView from '../Map/MapView';
 import ReportForm from '../Reports/ReportForm';
 import ReportHistory from '../Reports/ReportHistory';
 import Analytics from '../Analytics/Analytics';
-import { FaMap, FaPlusCircle, FaHistory, FaChartBar } from 'react-icons/fa';
+import ModerationQueue from '../Reports/ModerationQueue';
 
-const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('map');
+const Dashboard = ({ initialTab = 'map' }) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const { user } = useContext(AuthContext);
+  const { fetchReports } = useContext(ReportContext);
   const navigate = useNavigate();
 
   const tabs = [
-    { id: 'map', label: 'Live Map', icon: <FaMap />, requiresAuth: false },
-    { id: 'report', label: 'Report Crime', icon: <FaPlusCircle />, requiresAuth: true },
-    { id: 'history', label: 'My Reports', icon: <FaHistory />, requiresAuth: true },
-    { id: 'analytics', label: 'Analytics', icon: <FaChartBar />, requiresAuth: false }
+    { id: 'map', label: 'Live Map', requiresAuth: false },
+    { id: 'report', label: 'Report Crime', requiresAuth: false },
+    { id: 'history', label: 'My Reports', requiresAuth: true },
+    { id: 'analytics', label: 'Analytics', requiresAuth: false },
+    ...(user && ['moderator', 'administrator'].includes(user.role)
+      ? [{ id: 'moderation', label: 'Moderation', requiresAuth: true }]
+      : [])
   ];
 
   const handleTabClick = (tabId, requiresAuth) => {
@@ -39,9 +44,9 @@ const Dashboard = () => {
     marginBottom: '2rem',
     overflowX: 'auto',
     padding: '0.5rem',
-    background: 'linear-gradient(145deg, #1e293b 0%, #0f172a 100%)',
+    background: '#191B20',
     borderRadius: '16px',
-    border: '1px solid #475569',
+    border: '1px solid #3B414D',
     boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)'
   };
 
@@ -50,10 +55,10 @@ const Dashboard = () => {
     minWidth: '150px',
     padding: '1rem 1.5rem',
     background: isActive 
-      ? 'linear-gradient(135deg, #3b82f6, #2563eb)' 
+      ? '#3B82F6'
       : 'transparent',
-    color: isActive ? '#ffffff' : '#cbd5e1',
-    border: isActive ? 'none' : '1px solid #475569',
+    color: isActive ? '#F3F4F6' : '#A8AFBC',
+    border: isActive ? 'none' : '1px solid #3B414D',
     borderRadius: '12px',
     cursor: 'pointer',
     fontSize: '1rem',
@@ -63,15 +68,15 @@ const Dashboard = () => {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.8rem',
-    boxShadow: isActive ? '0 4px 16px rgba(59, 130, 246, 0.4)' : 'none'
+    boxShadow: 'none'
   });
 
   const tabContentStyles = {
-    background: 'linear-gradient(145deg, #1e293b 0%, #0f172a 100%)',
+    background: '#191B20',
     borderRadius: '16px',
     padding: '2rem',
-    border: '1px solid #475569',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+    border: '1px solid #3B414D',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.22)',
     minHeight: '500px'
   };
 
@@ -96,7 +101,6 @@ const Dashboard = () => {
               }
             }}
           >
-            {tab.icon}
             <span>{tab.label}</span>
           </button>
         ))}
@@ -104,9 +108,10 @@ const Dashboard = () => {
 
       <div style={tabContentStyles}>
         {activeTab === 'map' && <MapView />}
-        {activeTab === 'report' && <ReportForm />}
+        {activeTab === 'report' && <ReportForm onSaved={fetchReports} />}
         {activeTab === 'history' && <ReportHistory />}
         {activeTab === 'analytics' && <Analytics />}
+        {activeTab === 'moderation' && <ModerationQueue />}
       </div>
     </div>
   );

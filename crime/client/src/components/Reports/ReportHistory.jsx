@@ -1,28 +1,29 @@
 import React, { useContext, useState } from 'react';
 import { ReportContext } from '../../context/ReportContext';
 import { deleteReport } from '../../utils/api';
-import { FaMapMarkerAlt, FaClock, FaEdit, FaTrash, FaEye, FaEyeSlash } from 'react-icons/fa';
+import ReportForm from './ReportForm';
 
 const ReportHistory = () => {
-  const { reports, fetchReports } = useContext(ReportContext);
+  const { reports, loading, error, fetchReports } = useContext(ReportContext);
   const [expandedId, setExpandedId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [editingReport, setEditingReport] = useState(null);
 
   const colors = {
     primary: '#3b82f6',
     success: '#10b981',
     error: '#ef4444',
     warning: '#f59e0b',
-    card: '#1e293b',
-    cardLight: '#334155',
+    card: '#191B20',
+    cardLight: '#242730',
     text: '#ffffff',
-    textSecondary: '#cbd5e1',
-    textMuted: '#94a3b8',
-    border: '#475569'
+    textSecondary: '#A8AFBC',
+    textMuted: '#9CA3AF',
+    border: '#3B414D'
   };
 
   const handleDelete = async (reportId) => {
-    if (!window.confirm('⚠️ Are you sure you want to delete this report? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
       return;
     }
     
@@ -44,12 +45,12 @@ const ReportHistory = () => {
   const getCrimeColor = (type) => {
     const colorMap = {
       Theft: colors.error,
-      Assault: '#dc2626',
-      Vandalism: colors.warning,
-      Burglary: '#8b5cf6',
+      Assault: colors.warning,
+      Vandalism: '#A78BFA',
+      Burglary: '#EAB308',
       Robbery: '#991b1b',
       'Vehicle Crime': '#ea580c',
-      Other: colors.primary
+      Other: '#9CA3AF'
     };
     return colorMap[type] || colors.border;
   };
@@ -91,10 +92,22 @@ const ReportHistory = () => {
     gap: '0.6rem'
   };
 
+  if (loading) return <p role="status">Loading your reports…</p>;
+  if (error) return <p className="auth-error" role="alert">{error}</p>;
+  if (editingReport) {
+    return (
+      <ReportForm
+        initialReport={editingReport}
+        onSaved={async () => {
+          await fetchReports();
+          setEditingReport(null);
+        }}
+      />
+    );
+  }
   if (reports.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '3rem' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📭</div>
         <h3 style={{ color: colors.text, fontSize: '1.5rem', marginBottom: '0.8rem' }}>
           No Reports Yet
         </h3>
@@ -110,7 +123,7 @@ const ReportHistory = () => {
     <div>
       <div style={headerStyles}>
         <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: colors.text, fontWeight: 800 }}>
-          📋 Your Crime Reports
+          Your Crime Reports
         </h2>
         <p style={{ color: colors.textSecondary, fontSize: '1rem' }}>
           Total reports: <strong>{reports.length}</strong>
@@ -161,28 +174,28 @@ const ReportHistory = () => {
               </p>
               
               <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '1rem', fontSize: '0.9rem', color: colors.textMuted }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <FaMapMarkerAlt /> {report.location}
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <FaClock /> {new Date(report.time).toLocaleString()}
-                </span>
+                <span>{report.location}</span>
+                <span>{new Date(report.time).toLocaleString()}</span>
               </div>
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-              {expandedId === report.id ? (
-                <FaEyeSlash style={{ fontSize: '1.5rem', color: colors.primary }} />
-              ) : (
-                <FaEye style={{ fontSize: '1.5rem', color: colors.textMuted }} />
-              )}
-            </div>
+            <button
+              type="button"
+              aria-expanded={expandedId === report.id}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleExpand(report.id);
+              }}
+              style={{ ...buttonStyles, background: 'transparent', color: colors.primary, padding: '0.5rem' }}
+            >
+              {expandedId === report.id ? 'Hide details' : 'View details'}
+            </button>
           </div>
           
           {expandedId === report.id && (
             <div style={detailsStyles} onClick={(e) => e.stopPropagation()}>
               <h4 style={{ marginBottom: '1rem', color: colors.text, fontWeight: 700 }}>
-                📄 Full Report Details
+                Full Report Details
               </h4>
               
               <div style={{ display: 'grid', gap: '0.8rem', color: colors.textSecondary, marginBottom: '1.5rem' }}>
@@ -207,19 +220,37 @@ const ReportHistory = () => {
                 <div>
                   <strong style={{ color: colors.text }}>Status:</strong>{' '}
                   <span style={{ 
-                    color: report.status === 'resolved' ? colors.success : colors.warning,
+                    color: report.status === 'verified' ? colors.success : colors.warning,
                     fontWeight: 600,
                     textTransform: 'uppercase'
                   }}>
                     {report.status || 'PENDING'}
                   </span>
                 </div>
+                {report.status === 'pending' && (
+                  <p role="status" style={{ margin: 0 }}>
+                    Your report is awaiting administrator review.
+                  </p>
+                )}
+                {report.reviewNote && (
+                  <div>
+                    <strong style={{ color: colors.text }}>Review update:</strong>{' '}
+                    {report.reviewNote}
+                  </div>
+                )}
+                {report.reviewedAt && (
+                  <div>
+                    <strong style={{ color: colors.text }}>Reviewed:</strong>{' '}
+                    {new Date(report.reviewedAt).toLocaleString()}
+                  </div>
+                )}
                 <div>
                   <strong style={{ color: colors.text }}>Report ID:</strong> {report.id}
                 </div>
               </div>
               
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                {report.status === 'pending' && (
                 <button
                   style={{ 
                     ...buttonStyles,
@@ -236,14 +267,13 @@ const ReportHistory = () => {
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = 'none';
                   }}
-                  onClick={() => {
-                    // Navigate to edit (you'll need to implement this)
-                    console.log('Edit report:', report.id);
-                  }}
+                  onClick={() => setEditingReport(report)}
                 >
-                  <FaEdit /> Edit Report
+                  Edit Report
                 </button>
+                )}
                 
+                {report.status === 'pending' && (
                 <button
                   style={{ 
                     ...buttonStyles,
@@ -266,8 +296,9 @@ const ReportHistory = () => {
                   onClick={() => handleDelete(report.id)}
                   disabled={deleteLoading}
                 >
-                  <FaTrash /> Delete Report
+                  Delete Report
                 </button>
+                )}
               </div>
             </div>
           )}

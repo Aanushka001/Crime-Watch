@@ -1,109 +1,72 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, Circle, useMap } from 'react-leaflet';
 import { getPublicReports } from '../../utils/api';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
-// Fix Leaflet default icon issue
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
-});
-
-// Custom blue marker for user location
-const userLocationIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const MapController = ({ center }) => {
+const MapController = ({ center, zoom }) => {
   const map = useMap();
   useEffect(() => {
-    map.flyTo(center, 12, { duration: 1.5 });
-  }, [center, map]);
+    map.flyTo(center, zoom, { duration: 1.5 });
+  }, [center, map, zoom]);
   return null;
 };
 
 const MapView = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [crimeFilter, setCrimeFilter] = useState('');
+  const [radiusKm, setRadiusKm] = useState(50);
+  const [loadError, setLoadError] = useState('');
   const [userLocation, setUserLocation] = useState(null);
   const [locationName, setLocationName] = useState('');
   const [locationError, setLocationError] = useState('');
 
   const colors = {
     primary: '#3b82f6',
-    card: '#1e293b',
-    cardLight: '#334155',
+    card: '#191B20',
+    cardLight: '#242730',
     text: '#ffffff',
-    textSecondary: '#cbd5e1',
-    border: '#475569'
+    textSecondary: '#A8AFBC',
+    border: '#3B414D'
   };
 
   useEffect(() => {
-    fetchReports();
     getUserLocation();
   }, []);
 
-  const fetchReports = async () => {
-    try {
-      const data = await getPublicReports();
-      setReports(data);
-    } catch (err) {
-      console.error('Error fetching reports:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setLoadError('');
+    getPublicReports(100, crimeFilter, locationName ? userLocation : null, radiusKm)
+      .then((data) => {
+        if (active) setReports(data);
+      })
+      .catch((err) => {
+        if (active) setLoadError(err.response?.data?.error || 'Unable to load verified reports.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [crimeFilter, locationName, radiusKm, userLocation]);
 
   const getUserLocation = () => {
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by your browser');
-      setUserLocation([37.7749, -122.4194]); // Default fallback
+      setUserLocation([20, 0]);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const { latitude, longitude } = position.coords;
         setUserLocation([latitude, longitude]);
-        
-        try {
-          const response = await fetch(
-            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-          );
-          const data = await response.json();
-          setLocationName(`${data.city || data.locality || ''}, ${data.countryName || ''}`);
-        } catch (err) {
-          console.error('Error getting location name:', err);
-          setLocationName('Your Location');
-        }
+        setLocationName('Your Location');
       },
-      (error) => {
-        console.error('Geolocation error:', error);
+      () => {
         setLocationError('Unable to retrieve your location');
-        
-        // Fallback to IP-based location
-        fetch('https://ipapi.co/json/')
-          .then(res => res.json())
-          .then(data => {
-            if (data.latitude && data.longitude) {
-              setUserLocation([data.latitude, data.longitude]);
-              setLocationName(`${data.city}, ${data.country_name}`);
-            } else {
-              setUserLocation([37.7749, -122.4194]);
-              setLocationName('Default Location');
-            }
-          })
-          .catch(() => {
-            setUserLocation([37.7749, -122.4194]);
-            setLocationName('Default Location');
-          });
+        setUserLocation([20, 0]);
       },
       {
         enableHighAccuracy: true,
@@ -116,12 +79,12 @@ const MapView = () => {
   const getCrimeColor = (crimeType) => {
     const colors = {
       Theft: '#ef4444',
-      Assault: '#dc2626',
-      Vandalism: '#f59e0b',
-      Burglary: '#8b5cf6',
+      Assault: '#f59e0b',
+      Vandalism: '#a78bfa',
+      Burglary: '#eab308',
       Robbery: '#991b1b',
       'Vehicle Crime': '#ea580c',
-      Other: '#3b82f6'
+      Other: '#9ca3af'
     };
     return colors[crimeType] || '#6b7280';
   };
@@ -146,7 +109,6 @@ const MapView = () => {
   if (loading || !userLocation) {
     return (
       <div style={{ textAlign: 'center', padding: '3rem', color: colors.textSecondary }}>
-        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🗺️</div>
         <div>Loading map and detecting your location...</div>
       </div>
     );
@@ -164,7 +126,6 @@ const MapView = () => {
           alignItems: 'center',
           gap: '0.8rem'
         }}>
-          <span style={{ fontSize: '2rem' }}>🗺️</span>
           Live Crime Map
         </h2>
         {locationName && (
@@ -176,49 +137,73 @@ const MapView = () => {
             gap: '0.5rem',
             margin: 0
           }}>
-            <span style={{ fontSize: '1.2rem' }}>📍</span>
             Your location: <strong>{locationName}</strong>
           </p>
         )}
         {locationError && (
           <p style={{ color: '#f59e0b', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-            ⚠️ {locationError}
+            {locationError}
           </p>
         )}
+        <label className="map-filter">
+          Filter verified reports
+          <select value={crimeFilter} onChange={(event) => setCrimeFilter(event.target.value)}>
+            <option value="">All crime types</option>
+            {['Theft', 'Assault', 'Vandalism', 'Burglary', 'Robbery', 'Vehicle Crime', 'Other'].map((type) => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+        </label>
+        {locationName && (
+          <label className="map-filter">
+            Distance from your location
+            <select value={radiusKm} onChange={(event) => setRadiusKm(Number(event.target.value))}>
+              {[10, 25, 50, 100].map((distance) => (
+                <option key={distance} value={distance}>{distance} km</option>
+              ))}
+            </select>
+          </label>
+        )}
+        {loadError && <p className="auth-error" role="alert">{loadError}</p>}
+        <p>{reports.length} verified report{reports.length === 1 ? '' : 's'} shown</p>
         <p style={{ 
           fontSize: '0.95rem', 
           color: colors.textSecondary, 
           marginTop: '0.8rem',
           lineHeight: '1.6'
         }}>
-          Interactive map showing crime incidents in your area. Your location is marked with a blue marker. 
-          Colored circles indicate crime zones — click markers for details.
+          Interactive map showing crime incidents. {locationName
+            ? 'Your location is marked with a blue circle.'
+            : 'Location was not shared; pan and zoom the map to explore.'}
+          Colored circles indicate crime zones — select a circle for details.
         </p>
       </div>
 
       <div style={mapContainerStyles}>
         <MapContainer 
           center={userLocation} 
-          zoom={12} 
+          zoom={locationName ? 12 : 2}
           style={{ width: '100%', height: '100%' }}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <MapController center={userLocation} />
+          <MapController center={userLocation} zoom={locationName ? 12 : 2} />
           
-          {/* User Location Marker */}
-          <Marker position={userLocation} icon={userLocationIcon}>
+          {locationName && <CircleMarker
+            center={userLocation}
+            radius={9}
+            pathOptions={{ color: '#F3F4F6', fillColor: '#3B82F6', fillOpacity: 1, weight: 2 }}
+          >
             <Popup>
               <div style={{ color: '#000', padding: '0.5rem' }}>
-                <strong style={{ color: '#3b82f6', fontSize: '1.1rem' }}>📍 Your Location</strong><br />
+                <strong style={{ color: '#3b82f6', fontSize: '1.1rem' }}>Your Location</strong><br />
                 <div style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>{locationName}</div>
               </div>
             </Popup>
-          </Marker>
+          </CircleMarker>}
           
-          {/* Crime Report Markers */}
           {reports.map((report) => {
             if (report.latitude && report.longitude) {
               return (
@@ -233,7 +218,16 @@ const MapView = () => {
                       weight: 2
                     }}
                   />
-                  <Marker position={[report.latitude, report.longitude]}>
+                  <CircleMarker
+                    center={[report.latitude, report.longitude]}
+                    radius={8}
+                    pathOptions={{
+                      color: '#F3F4F6',
+                      fillColor: getCrimeColor(report.crimeType),
+                      fillOpacity: 1,
+                      weight: 2
+                    }}
+                  >
                     <Popup>
                       <div style={{ color: '#000', minWidth: '220px', padding: '0.5rem' }}>
                         <strong style={{ color: getCrimeColor(report.crimeType), fontSize: '1.1rem' }}>
@@ -243,14 +237,14 @@ const MapView = () => {
                           {report.description}
                         </div>
                         <div style={{ color: '#666', fontSize: '0.85rem' }}>
-                          <strong>📍 Location:</strong> {report.location}
+                          <strong>Location:</strong> {report.location}
                         </div>
                         <div style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-                          <strong>🕒 Time:</strong> {new Date(report.time).toLocaleString()}
+                          <strong>Time:</strong> {new Date(report.time).toLocaleString()}
                         </div>
                       </div>
                     </Popup>
-                  </Marker>
+                  </CircleMarker>
                 </React.Fragment>
               );
             }
@@ -279,15 +273,19 @@ const MapView = () => {
             <span>Theft</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '16px', height: '16px', background: '#dc2626', borderRadius: '50%' }}></div>
+            <div style={{ width: '16px', height: '16px', background: '#F59E0B', borderRadius: '50%' }}></div>
             <span>Assault</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '16px', height: '16px', background: '#f59e0b', borderRadius: '50%' }}></div>
+            <div style={{ width: '16px', height: '16px', background: '#A78BFA', borderRadius: '50%' }}></div>
             <span>Vandalism</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '16px', height: '16px', background: '#8b5cf6', borderRadius: '50%' }}></div>
+            <div style={{ width: '16px', height: '16px', background: '#EAB308', borderRadius: '50%' }}></div>
+            <span>Burglary</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '16px', height: '16px', background: '#9CA3AF', borderRadius: '50%' }}></div>
             <span>Other</span>
           </div>
         </div>

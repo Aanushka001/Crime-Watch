@@ -1,64 +1,41 @@
-const admin = require('firebase-admin');
+const mongoose = require('mongoose');
 
-const db = admin.firestore();
-const reportsCollection = db.collection('reports');
+const reportSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
+  isAnonymous: { type: Boolean, default: false },
+  crimeType: {
+    type: String,
+    required: true,
+    trim: true,
+    enum: ['Theft', 'Assault', 'Vandalism', 'Burglary', 'Robbery', 'Vehicle Crime', 'Other']
+  },
+  description: { type: String, required: true, trim: true, maxlength: 3000 },
+  location: { type: String, required: true, trim: true, maxlength: 300 },
+  latitude: { type: Number, required: true, min: -90, max: 90 },
+  longitude: { type: Number, required: true, min: -180, max: 180 },
+  geoLocation: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: { type: [Number], required: true }
+  },
+  time: { type: Date, required: true },
+  status: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected'],
+    default: 'pending',
+    index: true
+  },
+  reviewNote: { type: String, trim: true, maxlength: 1000, default: '' },
+  reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  reviewedAt: { type: Date, default: null },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { versionKey: false });
 
-const createReport = async (reportData) => {
-  const reportRef = await reportsCollection.add({
-    userId: reportData.userId,
-    crimeType: reportData.crimeType,
-    description: reportData.description,
-    location: reportData.location,
-    latitude: reportData.latitude || null,
-    longitude: reportData.longitude || null,
-    time: reportData.time,
-    status: 'pending',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp()
-  });
-  return reportRef.id;
-};
+reportSchema.index({ geoLocation: '2dsphere' });
+reportSchema.index({ status: 1, time: -1 });
 
-const getReportById = async (reportId) => {
-  const reportDoc = await reportsCollection.doc(reportId).get();
-  if (!reportDoc.exists) {
-    return null;
-  }
-  return { id: reportDoc.id, ...reportDoc.data() };
-};
-
-const getUserReports = async (userId) => {
-  const snapshot = await reportsCollection
-    .where('userId', '==', userId)
-    .orderBy('createdAt', 'desc')
-    .get();
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-};
-
-const getAllReports = async (limit = 100) => {
-  const snapshot = await reportsCollection
-    .orderBy('createdAt', 'desc')
-    .limit(limit)
-    .get();
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-};
-
-const updateReport = async (reportId, updates) => {
-  await reportsCollection.doc(reportId).update({
-    ...updates,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp()
-  });
-};
-
-const deleteReport = async (reportId) => {
-  await reportsCollection.doc(reportId).delete();
-};
-
-module.exports = {
-  createReport,
-  getReportById,
-  getUserReports,
-  getAllReports,
-  updateReport,
-  deleteReport
-};
+module.exports = mongoose.models.Report || mongoose.model('Report', reportSchema);

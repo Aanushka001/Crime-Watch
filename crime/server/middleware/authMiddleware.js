@@ -1,27 +1,56 @@
-const admin = require('firebase-admin');
+const jwt = require('jsonwebtoken');
 
-const verifyFirebaseToken = async (req, res, next) => {
+const authenticate = (req, res, next) => {
+  const authorization = req.get('authorization') || '';
+  const token = authorization.startsWith('Bearer ')
+    ? authorization.slice('Bearer '.length)
+    : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
   try {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
+    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    if (payload.type !== 'access' || !payload.sub) {
+      return res.status(401).json({ error: 'Invalid access token' });
     }
-
-    const token = authHeader.split('Bearer ')[1];
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    
-    req.user = {
-      uid: decodedToken.uid,
-      email: decodedToken.email,
-      name: decodedToken.name
-    };
-    
-    next();
-  } catch (error) {
-    console.error('Token verification error:', error);
-    return res.status(403).json({ error: 'Invalid or expired token' });
+    req.user = { id: payload.sub, role: payload.role };
+    return next();
+  } catch (_error) {
+    return res.status(401).json({ error: 'Invalid or expired access token' });
   }
 };
 
-module.exports = verifyFirebaseToken;
+const authenticateOptional = (req, res, next) => {
+  const authorization = req.get('authorization') || '';
+  if (!authorization) {
+    return next();
+  }
+
+  const token = authorization.startsWith('Bearer ')
+    ? authorization.slice('Bearer '.length)
+    : null;
+  if (!token) {
+    return res.status(401).json({ error: 'Invalid authorization header' });
+  }
+  try {
+    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    if (payload.type !== 'access' || !payload.sub) {
+      return res.status(401).json({ error: 'Invalid access token' });
+    }
+    req.user = { id: payload.sub, role: payload.role };
+    return next();
+  } catch (_error) {
+    return res.status(401).json({ error: 'Invalid or expired access token' });
+  }
+};
+
+const authorize = (...roles) => (req, res, next) => {
+  if (!req.user || !roles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'You do not have permission to perform this action' });
+  }
+  return next();
+};
+
+module.exports = { authenticate, authenticateOptional, authorize };

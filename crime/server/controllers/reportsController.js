@@ -1,118 +1,219 @@
-const {
-  createReport,
-  getReportById,
-  getUserReports,
-  getAllReports,
-  updateReport,
-  deleteReport
-} = require('../models/Report');
+const mongoose = require('mongoose');
+const Report = require('../models/Report');
 
-const submitReport = async (req, res) => {
+const serialize = (report) => {
+  const result = report.toObject ? report.toObject() : report;
+  delete result.userId;
+  delete result.reviewedBy;
+  return { ...result, id: result._id.toString() };
+};
+
+const validateReport = (data) => {
+  const latitude = Number(data.latitude);
+  const longitude = Number(data.longitude);
+  const time = new Date(data.time);
+  if (
+    !['Theft', 'Assault', 'Vandalism', 'Burglary', 'Robbery', 'Vehicle Crime', 'Other'].includes(data.crimeType) ||
+    typeof data.description !== 'string' || !data.description.trim() || data.description.length > 3000 ||
+    typeof data.location !== 'string' || !data.location.trim() || data.location.length > 300 ||
+    data.latitude === undefined || data.latitude === null || data.latitude === '' ||
+    data.longitude === undefined || data.longitude === null || data.longitude === '' ||
+    !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+    !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+    !data.time || Number.isNaN(time.getTime())
+  ) {
+    return null;
+  }
+  return {
+    crimeType: data.crimeType,
+    description: data.description.trim(),
+    location: data.location.trim(),
+    latitude,
+    longitude,
+    geoLocation: { type: 'Point', coordinates: [longitude, latitude] },
+    time
+  };
+};
+
+const createReport = async (req, res, next) => {
   try {
-    const { crimeType, description, location, latitude, longitude, time } = req.body;
-
-    if (!crimeType || !description || !location || !time) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const fields = validateReport(req.body);
+    if (!fields) {
+      return res.status(400).json({ error: 'Provide a valid crime type, description, location, coordinates, and date/time' });
     }
-
-    const reportId = await createReport({
-      userId: req.user.uid,
-      crimeType,
-      description,
-      location,
-      latitude,
-      longitude,
-      time
+    const isAnonymous = !req.user || req.body.isAnonymous === true;
+    const report = await Report.create({
+      ...fields,
+      userId: req.user ? req.user.id : null,
+      isAnonymous
     });
-
-    return res.status(201).json({
-      message: 'Report submitted successfully',
-      reportId
-    });
+    return res.status(201).json({ report: serialize(report) });
   } catch (error) {
-    console.error('Submit report error:', error);
-    return res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
-const getReports = async (req, res) => {
+const getMyReports = async (req, res, next) => {
   try {
-    const reports = await getUserReports(req.user.uid);
-    return res.status(200).json(reports);
+    const reports = await Report.find({ userId: req.user.id }).sort({ createdAt: -1 }).lean();
+    return res.status(200).json(reports.map(serialize));
   } catch (error) {
-    console.error('Get reports error:', error);
-    return res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
-const getReportDetails = async (req, res) => {
+const getPublicReports = async (req, res, next) => {
   try {
-    const report = await getReportById(req.params.id);
+    const limit = Number(req.query.limit || 100);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
+      return res.status(400).json({ error: 'Limit must be between 1 and 500' });
+    }
+    const query = { status: 'verified' };
+    if (req.query.crimeType) {
+      query.crimeType = req.query.crimeType;
+    }
+    const hasCoordinates = req.query.latitude !== undefined || req.query.longitude !== undefined;
+    if (hasCoordinates) {
+      const latitude = Number(req.query.latitude);
+      const longitude = Number(req.query.longitude);
+      const radiusKm = Number(req.query.radiusKm || 50);
+      if (
+        !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+        !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+        !Number.isFinite(radiusKm) || radiusKm < 1 || radiusKm > 500
+      ) {
+        return res.status(400).json({ error: 'Provide valid map coordinates and a radius between 1 and 500 km' });
+      }
+      query.geoLocation = {
+        $near: {
+          $geometry: { type: 'Point', coordinates: [longitude, latitude] },
+          $maxDistance: radiusKm * 1000
+        }
+      };
+    }
+    const reports = await Report.find(query).sort({ time: -1 }).limit(limit).lean();
+    return res.status(200).json(reports.map(serialize));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getPendingReports = async (_req, res, next) => {
+  try {
+    const reports = await Report.find({ status: 'pending' }).sort({ createdAt: 1 }).lean();
+    return res.status(200).json(reports.map(serialize));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getReport = async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+    const report = await Report.findById(req.params.id);
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
     }
-    if (report.userId !== req.user.uid) {
-      return res.status(403).json({ error: 'Unauthorized' });
+    if ((!report.userId || report.userId.toString() !== req.user.id) &&
+      !['moderator', 'administrator'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'You cannot view this report' });
     }
-    return res.status(200).json(report);
+    return res.status(200).json({ report: serialize(report) });
   } catch (error) {
-    console.error('Get report details error:', error);
-    return res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
-const updateReportDetails = async (req, res) => {
+const updateReport = async (req, res, next) => {
   try {
-    const report = await getReportById(req.params.id);
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+    const report = await Report.findById(req.params.id);
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
     }
-    if (report.userId !== req.user.uid) {
-      return res.status(403).json({ error: 'Unauthorized' });
+    const isOwner = report.userId && report.userId.toString() === req.user.id;
+    if (!isOwner && req.user.role !== 'administrator') {
+      return res.status(403).json({ error: 'You cannot edit this report' });
+    }
+    if (isOwner && report.status !== 'pending') {
+      return res.status(409).json({ error: 'Only pending reports can be edited' });
     }
 
-    await updateReport(req.params.id, req.body);
-    return res.status(200).json({ message: 'Report updated successfully' });
+    const fields = validateReport({ ...report.toObject(), ...req.body });
+    if (!fields) {
+      return res.status(400).json({ error: 'Report fields are invalid' });
+    }
+    Object.assign(report, fields, { updatedAt: new Date() });
+    await report.save();
+    return res.status(200).json({ report: serialize(report) });
   } catch (error) {
-    console.error('Update report error:', error);
-    return res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
-const deleteReportById = async (req, res) => {
+const deleteReport = async (req, res, next) => {
   try {
-    const report = await getReportById(req.params.id);
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+    const report = await Report.findById(req.params.id);
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
     }
-    if (report.userId !== req.user.uid) {
-      return res.status(403).json({ error: 'Unauthorized' });
+    const isOwner = report.userId && report.userId.toString() === req.user.id;
+    if (!isOwner && req.user.role !== 'administrator') {
+      return res.status(403).json({ error: 'You cannot delete this report' });
     }
-
-    await deleteReport(req.params.id);
+    if (isOwner && report.status !== 'pending') {
+      return res.status(409).json({ error: 'Only pending reports can be deleted' });
+    }
+    await report.deleteOne();
     return res.status(200).json({ message: 'Report deleted successfully' });
   } catch (error) {
-    console.error('Delete report error:', error);
-    return res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
-const getAllPublicReports = async (req, res) => {
+const moderateReport = async (req, res, next) => {
   try {
-    const limit = parseInt(req.query.limit) || 100;
-    const reports = await getAllReports(limit);
-    return res.status(200).json(reports);
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+    const { status, reviewNote = '' } = req.body;
+    if (!['verified', 'rejected'].includes(status) || typeof reviewNote !== 'string' || reviewNote.length > 1000) {
+      return res.status(400).json({ error: 'Choose verified or rejected and provide a review note under 1000 characters' });
+    }
+    const report = await Report.findByIdAndUpdate(
+      req.params.id,
+      {
+        status,
+        reviewNote: reviewNote.trim(),
+        reviewedBy: req.user.id,
+        reviewedAt: new Date(),
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    );
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+    return res.status(200).json({ report: serialize(report) });
   } catch (error) {
-    console.error('Get all reports error:', error);
-    return res.status(500).json({ error: error.message });
+    return next(error);
   }
 };
 
 module.exports = {
-  submitReport,
-  getReports,
-  getReportDetails,
-  updateReportDetails,
-  deleteReportById,
-  getAllPublicReports
+  createReport,
+  getMyReports,
+  getPublicReports,
+  getPendingReports,
+  getReport,
+  updateReport,
+  deleteReport,
+  moderateReport
 };

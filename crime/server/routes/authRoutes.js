@@ -1,10 +1,21 @@
 const express = require('express');
-const { registerUser, getUserProfile, deleteUserAccount } = require('../controllers/authController');
-const verifyFirebaseToken = require('../middleware/authMiddleware');
+const {
+  register,
+  login,
+  googleLogin,
+  refresh,
+  logout,
+  getProfile
+} = require('../controllers/authController');
+const { authenticate } = require('../middleware/authMiddleware');
+
 const router = express.Router();
 
-router.post('/register', registerUser);
-router.get('/profile', verifyFirebaseToken, getUserProfile);
-router.delete('/delete', verifyFirebaseToken, deleteUserAccount);
+router.post('/register', register);
+router.post('/login', login);
+router.post('/google', googleLogin);
+router.post('/refresh', refresh);
+router.post('/logout', logout);
+router.get('/profile', authenticate, getProfile);
 
 module.exports = router;

@@ -1,15 +1,18 @@
-const errorHandler = (err, req, res, next) => {
-  console.error('Error:', err.stack);
+const errorHandler = (err, _req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+  console.error(err);
 
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
-
-  res.status(statusCode).json({
-    error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  if (err.name === 'ValidationError' || err.name === 'CastError') {
+    return res.status(400).json({ error: err.message });
+  }
+  if (err.code === 11000) {
+    return res.status(409).json({ error: 'An account with that email already exists' });
+  }
+  return res.status(err.statusCode || 500).json({
+    error: err.statusCode ? err.message : 'An unexpected server error occurred'
   });
-
-  next();
 };
 
 module.exports = errorHandler;

@@ -181,6 +181,27 @@ describe('report API', () => {
     expect(response.body[0].userId).toBeUndefined();
   });
 
+  test('administrators can view every report with its moderation status', async () => {
+    const reports = [
+      { _id: '64b000000000000000000002', status: 'pending' },
+      { _id: '64b000000000000000000003', status: 'verified' },
+      { _id: '64b000000000000000000004', status: 'rejected' }
+    ];
+    const query = {
+      sort: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue(reports)
+    };
+    Report.find.mockReturnValue(query);
+
+    const response = await request(app)
+      .get('/api/reports/moderation')
+      .set('Authorization', `Bearer ${accessToken('administrator')}`)
+      .expect(200);
+
+    expect(Report.find).toHaveBeenCalledWith({});
+    expect(response.body.map(({ status }) => status)).toEqual(['pending', 'verified', 'rejected']);
+  });
+
   test('moderators can verify a report through the protected review route', async () => {
     const report = {
       _id: '64b000000000000000000002',

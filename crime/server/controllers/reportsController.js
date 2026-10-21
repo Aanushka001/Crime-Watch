@@ -98,9 +98,11 @@ const getPublicReports = async (req, res, next) => {
   }
 };
 
-const getPendingReports = async (_req, res, next) => {
+const getPendingReports = async (req, res, next) => {
   try {
-    const reports = await Report.find({ status: 'pending' }).sort({ createdAt: 1 }).lean();
+    const query = req.user.role === 'administrator' ? {} : { status: 'pending' };
+    const sortOrder = req.user.role === 'administrator' ? -1 : 1;
+    const reports = await Report.find(query).sort({ createdAt: sortOrder }).lean();
     return res.status(200).json(reports.map(serialize));
   } catch (error) {
     return next(error);

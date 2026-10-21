@@ -1,25 +1,24 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUser } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext';
-import { auth } from '../../utils/firebase';
-import { signOut } from 'firebase/auth';
+import { logout } from '../../utils/api';
 
 const Header = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const { user } = useContext(AuthContext);
+  const [logoutError, setLogoutError] = useState('');
+  const { user, clearSession } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const headerStyles = {
-    background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1e40af 100%)',
-    color: '#ffffff',
+    background: '#101114',
+    color: '#F3F4F6',
     padding: '1.2rem 2rem',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4), 0 0 40px rgba(59, 130, 246, 0.2)',
+    boxShadow: '0 4px 18px rgba(0, 0, 0, 0.25)',
     position: 'sticky',
     top: 0,
     zIndex: 1000,
     backdropFilter: 'blur(12px)',
-    borderBottom: '3px solid rgba(255, 255, 255, 0.1)',
+    borderBottom: '1px solid #3B414D',
     transition: 'all 0.3s ease'
   };
 
@@ -31,24 +30,17 @@ const Header = () => {
     margin: '0 auto'
   };
 
-  const logoContainerStyles = {
+  const brandStyles = {
     display: 'flex',
-    alignItems: 'center',
-    gap: '1rem'
-  };
-
-  const logoIconStyles = {
-    fontSize: '2.5rem',
-    filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3))'
+    alignItems: 'center'
   };
 
   const titleStyles = {
     margin: 0,
     fontSize: '2rem',
-    background: 'linear-gradient(135deg, #ffffff, #f1f5f9, #cbd5e1)',
+    background: 'none',
     WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
+    color: '#F3F4F6',
     fontWeight: 900,
     letterSpacing: '-0.8px',
     textShadow: '0 3px 12px rgba(0, 0, 0, 0.3)',
@@ -73,12 +65,10 @@ const Header = () => {
     borderRadius: '12px',
     transition: 'all 0.3s ease',
     position: 'relative',
-    background: 'rgba(255, 255, 255, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.15)',
-    backdropFilter: 'blur(10px)',
+    background: 'transparent',
+    border: '1px solid transparent',
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.5rem'
   };
 
   const profileToggleStyles = {
@@ -89,9 +79,8 @@ const Header = () => {
     padding: '0.7rem 1.3rem',
     borderRadius: '12px',
     transition: 'all 0.3s ease',
-    background: 'rgba(255, 255, 255, 0.15)',
-    border: '2px solid rgba(255, 255, 255, 0.2)',
-    backdropFilter: 'blur(10px)',
+    background: '#191B20',
+    border: '1px solid #3B414D',
     fontWeight: 600
   };
 
@@ -99,7 +88,7 @@ const Header = () => {
     position: 'absolute',
     top: 'calc(100% + 1rem)',
     right: 0,
-    background: 'linear-gradient(145deg, #1e293b 0%, #0f172a 100%)',
+    background: '#191B20',
     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6)',
     borderRadius: '16px',
     zIndex: 1000,
@@ -118,13 +107,12 @@ const Header = () => {
   const profileItemStyles = {
     padding: '1rem 1.5rem',
     cursor: 'pointer',
-    color: '#cbd5e1',
+    color: '#A8AFBC',
     transition: 'all 0.3s ease',
     fontWeight: 500,
     borderLeft: '3px solid transparent',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.8rem'
   };
 
   const toggleProfileMenu = () => {
@@ -133,22 +121,24 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
+      clearSession();
       setShowProfileMenu(false);
+      setLogoutError('');
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
+      setLogoutError(error.response?.data?.error || 'Unable to sign out. Please try again.');
     }
   };
 
   return (
     <header style={headerStyles}>
       <nav style={navStyles}>
-        <div style={logoContainerStyles}>
-          <span style={logoIconStyles}>🚨</span>
+        <div style={brandStyles}>
           <div>
             <h1 style={titleStyles}>Crime Watch</h1>
-            <div style={subtitleStyles}>Stay Safe • Stay Informed</div>
+            <div style={subtitleStyles}>Stay Safe, Stay Informed</div>
           </div>
         </div>
         
@@ -157,17 +147,17 @@ const Header = () => {
             to="/" 
             style={navLinkStyles}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.12)';
               e.currentTarget.style.transform = 'translateY(-2px)';
               e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.3)';
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.background = 'transparent';
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            🏠 Home
+            Home
           </Link>
           
           {!user && (
@@ -176,33 +166,33 @@ const Header = () => {
                 to="/login" 
                 style={navLinkStyles}
                 onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.12)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.3)';
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.background = 'transparent';
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                🔐 Login
+                Login
               </Link>
               <Link 
                 to="/register" 
                 style={navLinkStyles}
                 onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.12)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.3)';
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.background = 'transparent';
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                ✍️ Register
+                Register
               </Link>
             </>
           )}
@@ -213,44 +203,47 @@ const Header = () => {
                 to="/report" 
                 style={{
                   ...navLinkStyles,
-                  background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                  background: '#3B82F6',
                   border: '1px solid rgba(255, 255, 255, 0.3)',
                   fontWeight: 700,
-                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)'
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.5)';
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.35)';
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.2)';
                 }}
               >
-                📝 Report Crime
+                Report Crime
               </Link>
               
               <div style={{ position: 'relative' }}>
-                <div 
+                <button
+                  type="button"
+                  aria-expanded={showProfileMenu}
+                  aria-haspopup="true"
                   onClick={toggleProfileMenu} 
-                  style={profileToggleStyles}
+                  style={{ ...profileToggleStyles, color: '#F3F4F6', font: 'inherit', fontWeight: 600 }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.12)';
                     e.currentTarget.style.transform = 'translateY(-2px)';
                     e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.3)';
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                    e.currentTarget.style.background = '#191B20';
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  <FaUser style={{ fontSize: '1.2rem', color: '#f59e0b' }} />
-                  <span>{user.displayName || 'Profile'}</span>
-                </div>
+                  <span>{user.name || 'Profile'}</span>
+                </button>
                 
                 {showProfileMenu && (
                   <div style={profileDropdownStyles}>
+                    {logoutError && <p role="alert" style={{ color: '#ef4444', padding: '0.5rem 1rem' }}>{logoutError}</p>}
                     <ul style={profileListStyles}>
                       <li 
                         style={profileItemStyles}
@@ -276,7 +269,6 @@ const Header = () => {
                             width: '100%'
                           }}
                         >
-                          <FaUser style={{ color: '#3b82f6' }} />
                           <span>View Profile</span>
                         </Link>
                       </li>
@@ -296,7 +288,6 @@ const Header = () => {
                           e.currentTarget.style.paddingLeft = '1.5rem';
                         }}
                       >
-                        <span style={{ fontSize: '1.2rem' }}>🚪</span>
                         <span>Logout</span>
                       </li>
                     </ul>

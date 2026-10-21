@@ -83,7 +83,7 @@ const ProfilePage = () => {
       if (user) {
         try {
           const data = await getUserProfile();
-          setProfileData(data);
+          setProfileData(data.user);
         } catch (error) {
           console.error(error);
         } finally {
@@ -113,7 +113,7 @@ const ProfilePage = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div style={inputGroupStyles}>
             <label style={labelStyles}>Name:</label>
-            <div style={valueStyles}>{user?.displayName || 'N/A'}</div>
+            <div style={valueStyles}>{profileData?.name || user?.name || 'N/A'}</div>
           </div>
 
           <div style={inputGroupStyles}>
@@ -123,19 +123,19 @@ const ProfilePage = () => {
 
           <div style={inputGroupStyles}>
             <label style={labelStyles}>User ID:</label>
-            <div style={valueStyles}>{user?.uid || 'N/A'}</div>
+            <div style={valueStyles}>{user?.id || 'N/A'}</div>
           </div>
 
           <div style={inputGroupStyles}>
             <label style={labelStyles}>Account Created:</label>
             <div style={valueStyles}>
-              {profileData?.createdAt ? new Date(profileData.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
+              {profileData?.createdAt ? new Date(profileData.createdAt).toLocaleDateString() : 'N/A'}
             </div>
           </div>
 
           <div style={inputGroupStyles}>
             <label style={labelStyles}>Account Status:</label>
-            <div style={valueStyles}>Active and verified</div>
+            <div style={valueStyles}>{user?.role || 'citizen'}</div>
           </div>
         </div>
       </div>

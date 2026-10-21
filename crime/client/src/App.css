@@ -1,40 +1,31 @@
 :root {
-  /* Modern Color Palette - Deep Blues with Vibrant Accents */
-  --primary-color: #3b82f6;
-  --primary-dark: #2563eb;
-  --primary-light: #60a5fa;
-  --accent-color: #f59e0b;
-  --accent-warm: #ef4444;
-  --accent-success: #10b981;
-  --accent-purple: #8b5cf6;
-  
-  /* Background Colors */
-  --background-darkest: #0a0e1a;
-  --background-dark: #0f172a;
-  --background-medium: #1e293b;
-  --background-light: #334155;
-  --background-card: #1e293b;
-  
-  /* Text Colors */
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --text-link: #60a5fa;
-  
-  /* Border & Shadow */
-  --border-color: #475569;
-  --border-light: #64748b;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
-  --shadow-glow-accent: 0 0 30px rgba(245, 158, 11, 0.4);
-  
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  --gradient-accent: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-  --gradient-dark: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-  --gradient-card: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  --primary-color: #3B82F6;
+  --primary-dark: #2563EB;
+  --primary-light: #60A5FA;
+  --accent-color: #F59E0B;
+  --accent-warm: #EF4444;
+  --accent-success: #22C55E;
+  --accent-purple: #A78BFA;
+  --background-darkest: #101114;
+  --background-dark: #101114;
+  --background-medium: #191B20;
+  --background-light: #242730;
+  --background-card: #191B20;
+  --text-primary: #F3F4F6;
+  --text-secondary: #A8AFBC;
+  --text-muted: #9CA3AF;
+  --text-link: #3B82F6;
+  --border-color: #3B414D;
+  --border-light: #3B414D;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.16);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.24);
+  --shadow-glow: 0 0 12px rgba(59, 130, 246, 0.15);
+  --shadow-glow-accent: 0 0 12px rgba(245, 158, 11, 0.12);
+  --gradient-primary: #3B82F6;
+  --gradient-accent: #EF4444;
+  --gradient-dark: #101114;
+  --gradient-card: #191B20;
   
   /* Transitions */
   --transition-fast: 0.2s ease;
@@ -42,10 +33,10 @@
   --transition-slow: 0.5s ease;
   
   /* Status Colors */
-  --error-color: #ef4444;
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
-  --info-color: #3b82f6;
+  --error-color: #EF4444;
+  --success-color: #22C55E;
+  --warning-color: #F59E0B;
+  --info-color: #3B82F6;
 }
 
 * {
@@ -55,7 +46,7 @@
 }
 
 body {
-  background: var(--gradient-dark);
+  background: #101114;
   color: var(--text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   line-height: 1.6;
@@ -78,8 +69,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.08) 0%, transparent 50%);
+  background: transparent;
   pointer-events: none;
   z-index: 0;
 }
@@ -170,9 +160,15 @@ main {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.profile-icon {
-  font-size: 1.3rem;
-  color: var(--accent-color);
+.footer-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  color: var(--primary-light);
 }
 
 .profile-dropdown {
@@ -232,7 +228,7 @@ main {
 .auth-container, .Container {
   max-width: 900px;
   margin: 2rem auto;
-  background: var(--gradient-card);
+  background: #191B20;
   padding: 2.5rem;
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
@@ -397,6 +393,266 @@ main {
   font-weight: 600;
   text-align: center;
   animation: shake 0.3s ease;
+}
+
+.report-form-container,
+.moderation-card {
+  max-width: 860px;
+  margin: 0 auto 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--gradient-card);
+  color: var(--text-primary);
+}
+
+.report-form-container > p,
+.moderation-card > p {
+  color: var(--text-secondary);
+}
+
+.report-form,
+.report-form label,
+.auth-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.report-form {
+  margin-top: 1.5rem;
+}
+
+.coordinates-row,
+.moderation-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.coordinates-row > label {
+  flex: 1;
+}
+
+.secondary-button {
+  background: var(--background-light);
+  border: 1px solid var(--border-color);
+}
+
+.reject-button {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.moderation-card {
+  margin: 1rem 0;
+}
+
+.moderation-actions > button {
+  max-width: 180px;
+}
+
+.map-filter {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 320px;
+  margin-top: 1rem;
+  color: var(--text-primary);
+}
+
+.success-message {
+  margin: 1rem 0;
+  padding: 0.8rem 1rem;
+  color: #a7f3d0;
+  border-left: 4px solid var(--success-color);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.App > header {
+  background: #101114 !important;
+  border-bottom: 1px solid #3B414D !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25) !important;
+}
+
+.App > header h1,
+.App > footer h3 {
+  background: none !important;
+  color: #F3F4F6 !important;
+  -webkit-text-fill-color: #F3F4F6 !important;
+}
+
+.App > header a,
+.App > header a:visited {
+  color: #A8AFBC !important;
+}
+
+.App > header a:hover {
+  color: #3B82F6 !important;
+  background: #242730 !important;
+}
+
+.App > footer {
+  background: #101114 !important;
+  border-top: 1px solid #3B414D !important;
+  box-shadow: none !important;
+}
+
+.App > footer p,
+.App > footer a,
+.App > footer span {
+  color: #A8AFBC !important;
+}
+
+.App > footer a:hover,
+.App > footer a:hover span {
+  color: #3B82F6 !important;
+}
+
+.App > footer svg {
+  color: #9CA3AF !important;
+}
+
+.App > footer .emergency-call {
+  display: block;
+  color: #22C55E !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+}
+
+.auth-container {
+  max-width: 480px;
+  background: #191B20;
+  border-color: #3B414D;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+}
+
+.auth-container::before {
+  content: none;
+}
+
+.auth-container:hover,
+.Container:hover {
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+  transform: none;
+}
+
+.auth-title,
+.auth-subtitle {
+  background: none;
+  color: #F3F4F6;
+  -webkit-text-fill-color: #F3F4F6;
+}
+
+.auth-subtitle,
+.auth-hint {
+  color: #A8AFBC;
+}
+
+.auth-container a,
+.text-button {
+  color: #3B82F6;
+}
+
+.auth-error {
+  background: #35191C;
+  color: #FCA5A5;
+  border-left-color: #EF4444;
+  box-shadow: none;
+}
+
+.report-form-container,
+.moderation-card {
+  background: #191B20;
+  border-color: #3B414D;
+}
+
+.report-form-container > p,
+.moderation-card > p {
+  color: #A8AFBC;
+}
+
+.report-form-container input,
+.report-form-container select,
+.report-form-container textarea,
+.map-filter select,
+.auth-container input {
+  color-scheme: dark;
+  background: #242730;
+  color: #F3F4F6;
+  border-color: #3B414D;
+}
+
+.report-form-container input:focus,
+.report-form-container select:focus,
+.report-form-container textarea:focus,
+.map-filter select:focus,
+.auth-container input:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.anonymous-choice {
+  flex-direction: row !important;
+  align-items: center;
+}
+
+.anonymous-choice input {
+  width: auto;
+  accent-color: #3B82F6;
+}
+
+.text-button {
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-decoration: underline;
+}
+
+.secondary-button {
+  color: #F3F4F6;
+  background: #242730;
+}
+
+.reject-button {
+  background: #EF4444;
+}
+
+.success-message {
+  color: #22C55E;
+  background: rgba(34, 197, 94, 0.12);
+  border-left-color: #22C55E;
+}
+
+.auth-success {
+  background: rgba(34, 197, 94, 0.12);
+  border-left-color: #22C55E;
+}
+
+.profile-dropdown {
+  background: #191B20 !important;
+  border-color: #3B414D !important;
+}
+
+@media (max-width: 640px) {
+  .report-form-container {
+    padding: 1rem;
+  }
+}
+
+.google-signin {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .coordinates-row,
+  .moderation-actions {
+    flex-direction: column;
+  }
+
+  .moderation-actions > button {
+    max-width: none;
+  }
 }
 
 @keyframes shake {

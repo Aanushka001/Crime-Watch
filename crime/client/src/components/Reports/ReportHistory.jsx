@@ -227,6 +227,23 @@ const ReportHistory = () => {
                     {report.status || 'PENDING'}
                   </span>
                 </div>
+                {report.status === 'pending' && (
+                  <p role="status" style={{ margin: 0 }}>
+                    Your report is awaiting administrator review.
+                  </p>
+                )}
+                {report.reviewNote && (
+                  <div>
+                    <strong style={{ color: colors.text }}>Review update:</strong>{' '}
+                    {report.reviewNote}
+                  </div>
+                )}
+                {report.reviewedAt && (
+                  <div>
+                    <strong style={{ color: colors.text }}>Reviewed:</strong>{' '}
+                    {new Date(report.reviewedAt).toLocaleString()}
+                  </div>
+                )}
                 <div>
                   <strong style={{ color: colors.text }}>Report ID:</strong> {report.id}
                 </div>

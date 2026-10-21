@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const reportSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
   isAnonymous: { type: Boolean, default: false },
+  isDemo: { type: Boolean, default: false },
   crimeType: {
     type: String,
     required: true,

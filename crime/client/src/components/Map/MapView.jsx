@@ -166,6 +166,11 @@ const MapView = () => {
         )}
         {loadError && <p className="auth-error" role="alert">{loadError}</p>}
         <p>{reports.length} verified report{reports.length === 1 ? '' : 's'} shown</p>
+        {reports.some((report) => report.isDemo) && (
+          <p role="note" style={{ color: '#F59E0B', fontWeight: 600 }}>
+            Demo preview: some displayed reports are fictional sample data, not real incidents.
+          </p>
+        )}
         <p style={{ 
           fontSize: '0.95rem', 
           color: colors.textSecondary, 
@@ -231,7 +236,7 @@ const MapView = () => {
                     <Popup>
                       <div style={{ color: '#000', minWidth: '220px', padding: '0.5rem' }}>
                         <strong style={{ color: getCrimeColor(report.crimeType), fontSize: '1.1rem' }}>
-                          {report.crimeType}
+                          {report.isDemo ? 'DEMO - ' : ''}{report.crimeType}
                         </strong><br />
                         <div style={{ margin: '0.5rem 0', fontSize: '0.95rem', lineHeight: '1.5' }}>
                           {report.description}

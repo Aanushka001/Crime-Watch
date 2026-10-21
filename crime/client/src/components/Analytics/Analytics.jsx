@@ -69,6 +69,9 @@ const Analytics = () => {
       <p style={{ fontSize: '1rem', color: colors.textSecondary }}>
         Verified reports: {analytics.total}
       </p>
+      <p className="auth-hint" role="note">
+        Demo records shown in this preview are fictional sample data, not real incident reports.
+      </p>
 
       <div style={{
         display: 'grid',

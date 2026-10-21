@@ -152,6 +152,35 @@ describe('report API', () => {
       .expect(403);
   });
 
+  test('returns moderation status and review feedback to the report owner', async () => {
+    const report = {
+      _id: '64b000000000000000000002',
+      userId: citizenId,
+      status: 'rejected',
+      reviewNote: 'Please provide a more specific location.',
+      reviewedAt: '2026-10-21T10:00:00.000Z'
+    };
+    const query = {
+      sort: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue([report])
+    };
+    Report.find.mockReturnValue(query);
+
+    const response = await request(app)
+      .get('/api/reports')
+      .set('Authorization', `Bearer ${accessToken()}`)
+      .expect(200);
+
+    expect(Report.find).toHaveBeenCalledWith({ userId: citizenId });
+    expect(response.body[0]).toEqual(expect.objectContaining({
+      id: report._id,
+      status: 'rejected',
+      reviewNote: report.reviewNote,
+      reviewedAt: report.reviewedAt
+    }));
+    expect(response.body[0].userId).toBeUndefined();
+  });
+
   test('moderators can verify a report through the protected review route', async () => {
     const report = {
       _id: '64b000000000000000000002',

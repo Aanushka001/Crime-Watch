@@ -24,12 +24,6 @@ dist/
 coverage/
 .nyc_output/
 
-firebase-debug.log
-firestore-debug.log
 ui-debug.log
-.firebase/
-
-serviceAccountKey.json
-*-firebase-adminsdk-*.json
 
 .cache/

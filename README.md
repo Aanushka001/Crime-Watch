@@ -58,7 +58,7 @@ On API startup, Mongoose initializes the `users` and `reports` collections and t
 
 ## Roles and moderation
 
-Self-registration always creates a `citizen`; the API ignores role values sent during registration. To grant the first administrator, first register the trusted account normally. In MongoDB Compass, open the configured database, select the `users` collection, filter for the exact registered email, verify the user's name and email, and edit only that document's `role` field to `"administrator"`. Save, then sign out and sign in again so the new role is included in the access token. The account will see the Moderation tab and can verify or reject submitted reports. Confirm the role field was updated only for the intended account. Administrators can assign `moderator` or `administrator` to other trusted accounts. Never expose role editing as a public API.
+Self-registration always creates a `citizen`; the API ignores role values sent during registration. To grant the first administrator, first register the trusted account normally. In MongoDB Compass, open the configured database, select the `users` collection, filter for the exact registered email, verify the user's name and email, and edit only that document's `role` field to `"administrator"`. Save, then sign out and sign in again so the new role is included in the access token. The account will see every report and its moderation status in the Moderation tab and can verify or reject pending reports. Moderators see pending reports only. Confirm the role field was updated only for the intended account. Administrators can assign `moderator` or `administrator` to other trusted accounts. Never expose role editing as a public API.
 
 Reports can be submitted without signing in; those submissions are anonymous and are not linked to a user account. A signed-in citizen may also mark a report anonymous: the server keeps its owner link private so it remains visible in that citizen's report history, while public report responses never expose the reporter's account ID. The browser asks for location permission on submit if coordinates have not already been provided; the user may enter coordinates manually instead. Anonymous submissions are rate-limited by IP. Signed-in users can see whether each report is awaiting review, verified, or rejected, along with any administrator's review note and the review time, in My Reports. This setup does not send email notifications.
 
@@ -77,7 +77,7 @@ Citizens can create reports and edit or delete their own pending reports. Modera
 | `POST` | `/api/reports` | Public; optional sign-in | Submit an anonymous pending report |
 | `GET` | `/api/reports` | Signed in | List the caller's reports |
 | `GET` | `/api/reports/public` | Public | List verified reports (supports `crimeType`, `limit`, and optional `latitude`, `longitude`, `radiusKm`) |
-| `GET` | `/api/reports/moderation` | Moderator/admin | List pending reports |
+| `GET` | `/api/reports/moderation` | Moderator/admin | List pending reports for moderators; all reports for administrators |
 | `PATCH` | `/api/reports/:id` | Owner/admin | Edit a pending report |
 | `DELETE` | `/api/reports/:id` | Owner/admin | Delete a pending report |
 | `PATCH` | `/api/reports/:id/moderate` | Moderator/admin | Verify or reject a report |

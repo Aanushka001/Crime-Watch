@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "setup": "node scripts/ensure-local-env.js",
+    "seed:demo": "node scripts/seed-demo-data.js",
     "prestart": "node scripts/ensure-local-env.js",
     "start": "node server.js",
     "predev": "node scripts/ensure-local-env.js",

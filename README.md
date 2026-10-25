@@ -1,99 +1,152 @@
 # Crime Watch
 
-Crime Watch is a React crime-reporting interface backed by an Express API and MongoDB. Citizens can submit and track reports; moderators and administrators can review them. Only verified reports are returned to the public map and analytics.
+Community crime reporting and location-based safety awareness.
+
+Crime Watch is a React application with a Node.js/Express API and MongoDB. Users can submit reports, request location capture from their browser, follow report review outcomes, and explore verified reports on an interactive Leaflet map. Email/password sign-in is built in; Google sign-in is optional.
+
+> **Demo data:** The optional local seed command inserts four clearly labeled fictional sample reports around Chennai for screenshots and UI previews. They are not real incidents and should never be treated as public-safety information.
+
+## Features
+
+- Register and sign in using email and password; optional Google sign-in.
+- Submit reports anonymously or while signed in, with optional browser location capture.
+- View personal report history and moderation updates after signing in.
+- Review reports with citizen, moderator, and administrator roles.
+- Show verified reports on the map and in database-backed analytics.
+- Use MongoDB Compass to inspect local users, reports, and indexes.
+
+## Technology stack
+
+| Layer | Technology | Purpose |
+| --- | --- | --- |
+| User interface | React 18, Vite | Application screens and production builds |
+| Navigation | React Router | Client-side routes and dashboard tabs |
+| Map | Leaflet, React Leaflet, OpenStreetMap | Interactive report map |
+| API client | Axios | Frontend-to-backend HTTP requests |
+| Runtime | Node.js | Backend JavaScript runtime |
+| API | Express | Authentication, validation, reporting, moderation, and analytics |
+| Database | MongoDB | Persistent user and report records |
+| ODM | Mongoose | Schemas, validation, and geospatial indexes |
+| Authentication | JWT and HTTP-only refresh cookies | Short-lived access tokens and refresh sessions |
+| Tests | Jest and Supertest | Backend API tests |
 
 ## Architecture
 
-- `crime/client`: React 18 interface, React Router, Leaflet map, Axios API client.
-- `crime/server`: Express API, Mongoose models, JWT authentication, validation, role authorization, analytics aggregation.
-- MongoDB Community Server or MongoDB Atlas: persistent users and reports. MongoDB Compass is a desktop client for connecting to and inspecting a MongoDB server; Compass is not the database server.
+```text
+React + Vite client
+    | JSON API, JWT access token, HTTP-only refresh cookie
+    v
+Node.js + Express API
+    | Mongoose models, queries, geospatial index, aggregations
+    v
+MongoDB Community Server or MongoDB Atlas
+    ^
+MongoDB Compass (optional desktop client for inspection)
+```
+
+Compass is a database GUI, not the MongoDB server. Start a local MongoDB Community Server instance or configure an Atlas connection before running the API.
 
 ## Requirements
 
 - Node.js 20 or newer and npm
-- MongoDB Community Server locally, or a MongoDB Atlas connection string
-- MongoDB Compass (optional, for managing and inspecting records)
-- Postman (optional, for manual API checks)
+- MongoDB Community Server locally, or a MongoDB Atlas URI
+- MongoDB Compass (optional)
 
-## Configure
+## Install and configure
 
-Install dependencies in both app folders:
+Clone the repository, then install the independent server and client dependencies:
 
 ```powershell
+git clone https://github.com/Aanushka001/Crime-Watch.git
+cd Crime-Watch
 cd crime\server
 npm install
 cd ..\client
 npm install
 ```
 
-On the first local server start, the `prestart` script creates `crime/server/.env` when needed and generates independent JWT secrets automatically. To generate them before starting, run `npm run setup` from `crime/server`. The file is ignored by Git and must remain private. Set `MONGODB_URI` in that file to your local or Atlas connection string. You can also copy `crime/server/.env.example` and set both JWT secrets manually; they must each be at least 32 characters. For example, generate each secret with:
+The server creates `crime/server/.env` and generates independent JWT secrets on first start. To create it first, run `npm run setup` from `crime/server`. Set `MONGODB_URI` to your local or Atlas database URI. You may also create the file from `crime/server/.env.example` and provide two different JWT secrets of at least 32 characters. The `.env` file is ignored by Git; keep credentials private.
 
-```powershell
-node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-```
-
-The API requires `MONGODB_URI`, `JWT_ACCESS_SECRET`, and `JWT_REFRESH_SECRET`; local start generates the secrets if needed, while production requires them to be supplied in the environment. Refresh sessions are stored as a hash in MongoDB and delivered to the browser in an HTTP-only cookie. Access tokens are short-lived and kept in memory by the frontend.
-
-Create `crime/client/.env` from `crime/client/.env.example` if the API URL or Google sign-in client ID needs to be changed. Email/password registration and login are free and work without any third-party client ID. Google sign-in is optional and only appears when a Google OAuth web client ID is configured in both the frontend and backend environment files.
+The client can run without any third-party client ID. Email/password authentication works by default. Google sign-in is optional and requires `GOOGLE_CLIENT_ID` on the server and `VITE_GOOGLE_CLIENT_ID` in `crime/client/.env`.
 
 ## Run locally
 
-In one terminal:
+Start MongoDB first, then run each app in its own terminal.
+
+**Terminal 1 — API** (`crime/server`):
 
 ```powershell
 cd crime\server
-npm run dev
+npm start
 ```
 
-In another terminal:
+**Terminal 2 — Client** (`crime/client`):
 
 ```powershell
 cd crime\client
 npm start
 ```
 
-The UI runs at `http://localhost:3000` and API at `http://localhost:5000`. Check API/database availability at `http://localhost:5000/health`.
+The client is available at `http://localhost:3000`, the API at `http://localhost:5000`, and the database health check at `http://localhost:5000/health`. On startup, Mongoose initializes the `users` and `reports` collections and their indexes in the database selected by `MONGODB_URI`.
 
-On API startup, Mongoose initializes the `users` and `reports` collections and their schema indexes. The collections are available in MongoDB Compass under the database named by `MONGODB_URI`.
+## Sample screenshots
 
-## Roles and moderation
+Screenshots below show the running application and local MongoDB demo records. The demo records are fictional.
 
-Self-registration always creates a `citizen`; the API ignores role values sent during registration. To grant the first administrator, first register the trusted account normally. In MongoDB Compass, open the configured database, select the `users` collection, filter for the exact registered email, verify the user's name and email, and edit only that document's `role` field to `"administrator"`. Save, then sign out and sign in again so the new role is included in the access token. The account will see every report and its moderation status in the Moderation tab and can verify or reject pending reports. Moderators see pending reports only. Confirm the role field was updated only for the intended account. Administrators can assign `moderator` or `administrator` to other trusted accounts. Never expose role editing as a public API.
+| Live map | Analytics |
+| --- | --- |
+| ![Crime Watch live map with fictional demo records](docs/screenshots/crime-watch-map.png) | ![Crime Watch analytics with fictional demo records](docs/screenshots/crime-watch-analytics.png) |
 
-Reports can be submitted without signing in; those submissions are anonymous and are not linked to a user account. A signed-in citizen may also mark a report anonymous: the server keeps its owner link private so it remains visible in that citizen's report history, while public report responses never expose the reporter's account ID. The browser asks for location permission on submit if coordinates have not already been provided; the user may enter coordinates manually instead. Anonymous submissions are rate-limited by IP. Signed-in users can see whether each report is awaiting review, verified, or rejected, along with any administrator's review note and the review time, in My Reports. This setup does not send email notifications.
+| MongoDB Compass demo records |
+| --- |
+| ![Fictional demo records in the Crime Watch MongoDB reports collection](docs/screenshots/mongodb-demo-records.png) |
 
-Citizens can create reports and edit or delete their own pending reports. Moderators and administrators can use the Moderation tab to verify or reject pending reports. Verified reports are visible on the public map and are included in database analytics. All of these permissions are enforced by the API, not just the UI. To connect MongoDB Compass, first start MongoDB Community Server or provision an Atlas cluster, put its connection URI in `crime/server/.env` as `MONGODB_URI`, then use the same URI in Compass. Compass connects to a server; it does not provide the database service itself.
+## Load local demo records
 
-## API outline
+With the local API environment configured, run this command from `crime/server`:
+
+```powershell
+npm run seed:demo
+```
+
+This inserts or refreshes four deterministic, verified records marked `isDemo: true`, with locations and descriptions labeled as fictional demo data. It is restricted to a non-production local MongoDB host and does not modify user accounts or other reports. Re-running it updates those demo records. Do not run it against production.
+
+## Roles and report review
+
+Self-registration always creates a citizen; the API ignores a role supplied by the client. To grant administrator access to a trusted account, register it normally, open the configured database in Compass, and find that account by its exact email in the `users` collection. After verifying the account details, change only its `role` field to `"administrator"`. Save, then sign out and back in to refresh the role in the access token. Never grant an admin role through public registration or share the account password.
+
+Administrators can view all reports and their statuses and verify or reject pending reports. Moderators can review pending reports. Signed-in users see the review status, note, and time in My Reports. Signed-in anonymous reports stay associated with the submitter privately for history; public responses omit reporter and reviewer IDs. Reports submitted without signing in cannot be shown in an account history. Review updates are shown in the application; email notifications are not configured.
+
+## API overview
 
 | Method | Endpoint | Access | Purpose |
 | --- | --- | --- | --- |
-| `POST` | `/api/auth/register` | Public | Create a citizen account |
+| `POST` | `/api/auth/register` | Public | Register a citizen account |
 | `POST` | `/api/auth/login` | Public | Sign in with email and password |
-| `POST` | `/api/auth/google` | Public | Verify a Google ID credential |
-| `POST` | `/api/auth/refresh` | Refresh cookie | Rotate the refresh session |
+| `POST` | `/api/auth/google` | Public; optional config | Verify Google sign-in |
+| `POST` | `/api/auth/refresh` | Refresh cookie | Rotate a refresh session |
 | `POST` | `/api/auth/logout` | Public | Revoke and clear the refresh session |
-| `GET` | `/api/auth/profile` | Signed in | Get the signed-in user's profile |
-| `POST` | `/api/reports` | Public; optional sign-in | Submit an anonymous pending report |
-| `GET` | `/api/reports` | Signed in | List the caller's reports |
-| `GET` | `/api/reports/public` | Public | List verified reports (supports `crimeType`, `limit`, and optional `latitude`, `longitude`, `radiusKm`) |
-| `GET` | `/api/reports/moderation` | Moderator/admin | List pending reports for moderators; all reports for administrators |
-| `PATCH` | `/api/reports/:id` | Owner/admin | Edit a pending report |
-| `DELETE` | `/api/reports/:id` | Owner/admin | Delete a pending report |
+| `GET` | `/api/auth/profile` | Signed in | Read the current profile |
+| `POST` | `/api/reports` | Public; optional sign-in | Submit a report |
+| `GET` | `/api/reports` | Signed in | Read the caller's report history |
+| `GET` | `/api/reports/public` | Public | List verified reports, optionally by type and distance |
+| `GET` | `/api/reports/moderation` | Moderator/admin | List pending reports; admins see all statuses |
+| `PATCH` | `/api/reports/:id` | Owner/admin | Edit a permitted pending report |
+| `DELETE` | `/api/reports/:id` | Owner/admin | Delete a permitted pending report |
 | `PATCH` | `/api/reports/:id/moderate` | Moderator/admin | Verify or reject a report |
 | `GET` | `/api/analytics` | Public | Aggregate verified reports by type, time, and location |
 
-Use `Authorization: Bearer <accessToken>` for protected routes. The frontend handles the access token and refresh cookie automatically. Every report must include `crimeType`, `description`, `location`, `latitude`, `longitude`, and an ISO date/time in `time`.
+Protected API routes use `Authorization: Bearer <access-token>`. Each report includes a crime type, description, location, coordinates, and an ISO date/time.
 
 ## Verify
-
-Run the backend API tests and frontend production build:
 
 ```powershell
 cd crime\server
 npm test
+npm run lint
 cd ..\client
+npm run lint
 npm run build
 ```
 
-The backend tests use Jest and Supertest and do not require a running MongoDB instance. For an end-to-end local check, register a citizen, submit a report, change that account to moderator in Compass, sign in again, verify the report in the Moderation tab, then confirm that the verified report appears on the map and in analytics.
+Backend tests use mocks and do not require MongoDB. A real persistence check requires the configured database to be running.

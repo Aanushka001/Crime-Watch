@@ -11,6 +11,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { setSession } = useContext(AuthContext);
   const navigate = useNavigate();
+  // Google sign-in is optional: the button only renders when a client ID is configured.
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const submitSession = async (request) => {
@@ -52,7 +53,7 @@ const Login = () => {
       <p className="auth-subtitle">
         Don&apos;t have an account? <Link to="/register">Create an account</Link>
       </p>
-      {googleClientId ? (
+      {googleClientId && (
         <div className="google-signin">
           <GoogleLogin
             onSuccess={(response) => {
@@ -62,8 +63,6 @@ const Login = () => {
             onError={() => setError('Google sign-in failed. Please try again.')}
           />
         </div>
-      ) : (
-        <p className="auth-hint">Google sign-in is unavailable until VITE_GOOGLE_CLIENT_ID is configured.</p>
       )}
     </section>
   );

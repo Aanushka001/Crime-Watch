@@ -1,6 +1,15 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const resolveApiBaseUrl = () => {
+  const configured = import.meta.env.VITE_API_URL;
+  if (!configured) {
+    return 'http://localhost:5000/api';
+  }
+  const trimmed = configured.replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 let accessToken = null;
 let refreshRequest = null;
 
@@ -21,6 +30,30 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config || {};
+    const requestUrl = original.url || '';
+    const isAuthRoute = requestUrl.includes('/auth/');
+    if (error.response?.status !== 401 || original._retry || isAuthRoute) {
+      return Promise.reject(error);
+    }
+
+    original._retry = true;
+    try {
+      const session = await refreshSession();
+      setAccessToken(session.accessToken);
+      original.headers = original.headers || {};
+      original.headers.Authorization = `Bearer ${session.accessToken}`;
+      return apiClient(original);
+    } catch (refreshError) {
+      setAccessToken(null);
+      return Promise.reject(error);
+    }
+  }
+);
+
 export const register = async (credentials) => (await apiClient.post('/auth/register', credentials)).data;
 export const login = async (credentials) => (await apiClient.post('/auth/login', credentials)).data;
 export const googleLogin = async (credential) => (await apiClient.post('/auth/google', { credential })).data;
@@ -36,6 +69,9 @@ export const refreshSession = () => {
 };
 export const logout = async () => (await apiClient.post('/auth/logout')).data;
 export const getUserProfile = async () => (await apiClient.get('/auth/profile')).data;
+export const assignUserRole = async (email, role) => (
+  await apiClient.patch('/auth/users/role', { email, role })
+).data;
 export const submitReport = async (reportData) => (await apiClient.post('/reports', reportData)).data;
 export const getUserReports = async () => (await apiClient.get('/reports')).data;
 export const getPendingReports = async () => (await apiClient.get('/reports/moderation')).data;

@@ -2,12 +2,17 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { getUserProfile } from '../../utils/api';
+import { assignUserRole, getUserProfile } from '../../utils/api';
 
 const ProfilePage = () => {
   const { user, loading: authLoading } = useContext(AuthContext);
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [roleEmail, setRoleEmail] = useState('');
+  const [roleValue, setRoleValue] = useState('moderator');
+  const [roleMessage, setRoleMessage] = useState('');
+  const [roleError, setRoleError] = useState('');
+  const [roleSaving, setRoleSaving] = useState(false);
   const navigate = useNavigate();
 
   const containerStyles = {
@@ -95,6 +100,22 @@ const ProfilePage = () => {
     fetchProfile();
   }, [user]);
 
+  const handleAssignRole = async (event) => {
+    event.preventDefault();
+    setRoleMessage('');
+    setRoleError('');
+    setRoleSaving(true);
+    try {
+      const result = await assignUserRole(roleEmail, roleValue);
+      setRoleMessage(`${result.user.email} is now a ${result.user.role}. They must sign out and sign in again.`);
+      setRoleEmail('');
+    } catch (requestError) {
+      setRoleError(requestError.response?.data?.error || 'Unable to update that account role.');
+    } finally {
+      setRoleSaving(false);
+    }
+  };
+
   if (loading || authLoading) {
     return (
       <div style={containerStyles}>
@@ -138,6 +159,54 @@ const ProfilePage = () => {
             <div style={valueStyles}>{user?.role || 'citizen'}</div>
           </div>
         </div>
+
+        {user?.role === 'administrator' && (
+          <form onSubmit={handleAssignRole} style={{ marginTop: '2rem' }}>
+            <h2 style={{ ...labelStyles, fontSize: '1.2rem', marginBottom: '1rem' }}>Assign a trusted role</h2>
+            <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '1rem' }}>
+              The account must already exist. Role changes take effect after that user signs in again.
+            </p>
+            <div style={inputGroupStyles}>
+              <label style={labelStyles} htmlFor="role-email">Account email</label>
+              <input
+                id="role-email"
+                type="email"
+                required
+                value={roleEmail}
+                onChange={(event) => setRoleEmail(event.target.value)}
+                style={{ ...valueStyles, color: '#ffffff' }}
+              />
+            </div>
+            <div style={inputGroupStyles}>
+              <label style={labelStyles} htmlFor="role-value">Role</label>
+              <select
+                id="role-value"
+                value={roleValue}
+                onChange={(event) => setRoleValue(event.target.value)}
+                style={{ ...valueStyles, color: '#ffffff' }}
+              >
+                <option value="citizen">citizen</option>
+                <option value="moderator">moderator</option>
+                <option value="administrator">administrator</option>
+              </select>
+            </div>
+            {roleError && <p role="alert" style={{ color: '#fca5a5' }}>{roleError}</p>}
+            {roleMessage && <p role="status" style={{ color: '#86efac' }}>{roleMessage}</p>}
+            <button
+              type="submit"
+              disabled={roleSaving}
+              style={{
+                ...valueStyles,
+                width: '100%',
+                cursor: 'pointer',
+                background: '#2563eb',
+                border: 'none'
+              }}
+            >
+              {roleSaving ? 'Saving…' : 'Update role'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

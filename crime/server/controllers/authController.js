@@ -5,12 +5,20 @@ const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 
 const refreshCookieName = 'crime_watch_refresh';
-const refreshCookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
-  path: '/api/auth'
-});
+
+// Production: the frontend and API are on different onrender.com subdomains, which
+// browsers treat as different sites. A cross-site cookie must be SameSite=None and
+// Secure, otherwise the browser never sends it and users are signed out on refresh.
+// Local development keeps SameSite=Lax over plain http.
+const refreshCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/api/auth'
+  };
+};
 
 const setRefreshCookie = (res, token) => {
   res.cookie(refreshCookieName, token, {

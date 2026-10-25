@@ -5,24 +5,20 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const connectDatabase = require('./config/db');
+const { isOriginAllowed } = require('./config/corsOrigins');
 const authRoutes = require('./routes/authRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
 const { getAnalytics } = require('./controllers/analyticsController');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
-  .split(',')
-  .map((origin) => origin.trim());
 
+app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('Origin is not allowed by CORS'));
+    callback(null, isOriginAllowed(origin));
   },
   credentials: true
 }));
@@ -71,7 +67,7 @@ if (require.main === module) {
   connectDatabase()
     .then(() => {
       const port = Number(process.env.PORT || 5000);
-      app.listen(port, () => console.log(`Crime-Watch API listening on port ${port}`));
+      app.listen(port, '0.0.0.0', () => console.log(`Crime-Watch API listening on port ${port}`));
     })
     .catch((error) => {
       console.error('Failed to start Crime-Watch API:', error);

@@ -1,5 +1,5 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { ReportContext } from '../../context/ReportContext';
 import MapView from '../Map/MapView';
@@ -13,7 +13,15 @@ const Dashboard = ({ initialTab = 'map' }) => {
   const { user } = useContext(AuthContext);
   const { fetchReports } = useContext(ReportContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab, location.key]);
+  const location = useLocation();
+  useEffect(() => {
+  setActiveTab(initialTab);
+}, [initialTab, location.key]);
   const tabs = [
     { id: 'map', label: 'Live Map', requiresAuth: false },
     { id: 'report', label: 'Report Crime', requiresAuth: false },
